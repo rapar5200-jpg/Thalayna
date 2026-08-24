@@ -13,6 +13,10 @@
   --glass-bg: rgba(7, 23, 34, 0.82);
   --glass-border: rgba(255, 183, 3, 0.25);
   --font-family: 'Outfit', 'Poppins', sans-serif;
+  --sat: env(safe-area-inset-top, 0px);
+  --sab: env(safe-area-inset-bottom, 0px);
+  --sal: env(safe-area-inset-left, 0px);
+  --sar: env(safe-area-inset-right, 0px);
 }
 
 * {
@@ -21,25 +25,35 @@
   padding: 0;
   user-select: none;
   -webkit-user-select: none;
+  -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
 }
 
 html, body {
   width: 100%;
   height: 100%;
+  height: 100dvh;
   overflow: hidden;
+  position: fixed;
   background-color: var(--bg-dark);
   font-family: var(--font-family);
   color: #FFFFFF;
+  touch-action: none;
 }
 
 #app-container {
   position: relative;
   width: 100vw;
   height: 100vh;
+  height: 100dvh;
   display: flex;
   justify-content: center;
   align-items: center;
   overflow: hidden;
+  padding-top: var(--sat);
+  padding-bottom: var(--sab);
+  padding-left: var(--sal);
+  padding-right: var(--sar);
 }
 
 /* Canvas Viewport */
@@ -51,6 +65,7 @@ html, body {
   height: 100%;
   z-index: 1;
   background: #071722;
+  touch-action: none;
 }
 
 /* Screen Filters & Heartbeat FX */

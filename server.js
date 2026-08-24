@@ -1,8 +1,43 @@
+require('dotenv').config();
 const express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');
 const path = require('path');
 const fs = require('fs');
+
+// Optional Firebase Admin SDK Initialization
+let firestoreDb = null;
+try {
+  const admin = require('firebase-admin');
+  if (process.env.FIREBASE_SERVICE_ACCOUNT_KEY) {
+    let serviceAccount;
+    try {
+      // Check if it's a JSON string or path
+      if (process.env.FIREBASE_SERVICE_ACCOUNT_KEY.trim().startsWith('{')) {
+        serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_KEY);
+      } else if (fs.existsSync(process.env.FIREBASE_SERVICE_ACCOUNT_KEY)) {
+        serviceAccount = require(path.resolve(process.env.FIREBASE_SERVICE_ACCOUNT_KEY));
+      }
+    } catch (e) {
+      console.warn('Firebase Service Account Key parse note:', e.message);
+    }
+
+    if (serviceAccount) {
+      admin.initializeApp({
+        credential: admin.credential.cert(serviceAccount),
+        databaseURL: process.env.FIREBASE_DATABASE_URL
+      });
+      firestoreDb = admin.firestore();
+      console.log('⚡ Firebase Admin SDK Connected to Cloud Firestore!');
+    }
+  } else if (process.env.GOOGLE_APPLICATION_CREDENTIALS || process.env.FIREBASE_PROJECT_ID) {
+    admin.initializeApp();
+    firestoreDb = admin.firestore();
+    console.log('⚡ Firebase Admin SDK Connected via default credentials!');
+  }
+} catch (fbErr) {
+  console.log('ℹ️ Running in resilient local storage mode (Firebase Admin unconfigured).');
+}
 
 const app = express();
 const server = http.createServer(app);
@@ -13,7 +48,7 @@ const LEADERBOARD_FILE = path.join(__dirname, 'leaderboard.json');
 
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Dynamic Global Leaderboard Store (No Hardcoded Dummy Names)
+// Dynamic Global Leaderboard Store (With Cloud Firestore Sync & Resilient Local Fallback)
 function loadLeaderboard() {
   try {
     if (fs.existsSync(LEADERBOARD_FILE)) {
@@ -26,11 +61,26 @@ function loadLeaderboard() {
   return [];
 }
 
-function saveLeaderboard(board) {
+async function saveLeaderboard(board) {
   try {
     fs.writeFileSync(LEADERBOARD_FILE, JSON.stringify(board, null, 2));
   } catch (err) {
-    console.error('Error saving leaderboard:', err);
+    console.error('Error saving local leaderboard:', err);
+  }
+
+  // Asynchronously sync top players to Cloud Firestore
+  if (firestoreDb) {
+    try {
+      const batch = firestoreDb.batch();
+      const topEntries = board.slice(0, 50);
+      topEntries.forEach((player, idx) => {
+        const docRef = firestoreDb.collection('leaderboards').doc(player.name.replace(/[^a-zA-Z0-9_-]/g, '_'));
+        batch.set(docRef, { ...player, rank: idx + 1, updatedAt: new Date().toISOString() }, { merge: true });
+      });
+      await batch.commit();
+    } catch (fsErr) {
+      console.warn('Firestore async sync note:', fsErr.message);
+    }
   }
 }
 

@@ -2,10 +2,24 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>THALAYANA ADI | Real-Time 1v1 Online Multiplayer</title>
-  <meta name="description" content="Competitive real-time 1v1 online Kerala pillow fighting game set on a suspended log over backwaters.">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>THALAYANA ADI | Real-Time 1v1 Online Kerala Pillow Battle</title>
+  <meta name="description" content="Competitive real-time 1v1 online Kerala pillow fighting game set on a suspended log over evergreen backwaters.">
   
+  <!-- PWA & Mobile Web App Meta -->
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#FFB703">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="THALAYANA ADI">
+  <link rel="apple-touch-icon" href="/assets/red_player/frame_001.png">
+
+  <!-- OpenGraph / Social Metadata -->
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="THALAYANA ADI - The Ultimate Onam Pillow Battle">
+  <meta property="og:description" content="Challenge your friends in real-time 1v1 festive Kerala pillow combat.">
+  <meta property="og:image" content="/assets/red_player/frame_001.png">
+
   <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -474,5 +488,13 @@
   <script src="/socket.io/socket.io.js"></script>
   <!-- Main Game Client Engine -->
   <script src="game.js"></script>
+  <!-- Service Worker Registration for PWA Offline Cache -->
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js').catch(() => {});
+      });
+    }
+  </script>
 </body>
 </html>
