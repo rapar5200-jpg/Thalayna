@@ -1,0 +1,24 @@
+{
+  "name": "onam-pillow-fight",
+  "version": "1.0.0",
+  "description": "Real-Time 1v1 Online Onam Pillow Fight Game",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "keywords": [
+    "onam",
+    "pillow-fight",
+    "multiplayer",
+    "socket.io",
+    "canvas",
+    "kerala"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^4.19.2",
+    "socket.io": "^4.7.5"
+  }
+}

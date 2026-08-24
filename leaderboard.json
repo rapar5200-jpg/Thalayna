@@ -1,0 +1,16 @@
+[
+  {
+    "name": "HH",
+    "totalMatches": 4,
+    "matchesWon": 2,
+    "matchesLost": 2,
+    "roundsWon": 4,
+    "roundsLost": 4,
+    "energyDamageGiven": 128,
+    "energyDamageTaken": 128,
+    "winPercentage": 50,
+    "score": 173,
+    "winStreak": 1,
+    "bestWinStreak": 1
+  }
+]
