@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>THALAYANA ADI | Real-Time 1v1 Online Kerala Pillow Battle</title>
+  <meta name="description" content="Competitive real-time 1v1 online Kerala pillow fighting game set on a suspended log over evergreen backwaters.">
+  
+  <!-- PWA & Mobile Web App Meta -->
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#FFB703">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="THALAYANA ADI">
+  <link rel="apple-touch-icon" href="/assets/red_player/frame_001.png">
+
+  <!-- OpenGraph / Social Metadata -->
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="THALAYANA ADI - The Ultimate Onam Pillow Battle">
+  <meta property="og:description" content="Challenge your friends in real-time 1v1 festive Kerala pillow combat.">
+  <meta property="og:image" content="/assets/red_player/frame_001.png">
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800;900&family=Poppins:wght@500;700;900&display=swap" rel="stylesheet">
+  
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- Custom Background Music Audio Player -->
+  <audio id="bgm-player" src="/assets/bgm.mp3" loop preload="auto"></audio>
+
+  <!-- Screen Heartbeat & Speedline Overlay Filters -->
+  <div id="heartbeat-overlay" class="heartbeat-overlay hidden"></div>
+  <div id="speedlines-overlay" class="speedlines-overlay hidden"></div>
+
+  <!-- Main Game Container -->
+  <div id="app-container">
+    
+    <!-- HTML5 Canvas Rendering Viewport -->
+    <canvas id="game-canvas"></canvas>
+
+    <!-- Top UI Header Bar -->
+    <header class="top-nav" id="top-nav">
+      <div class="brand">
+        <span class="pookalam-icon">🌸</span>
+        <span class="brand-title">THALAYANA ADI</span>
+        <span class="online-tag"><i class="fa-solid fa-signal"></i> MULTIPLAYER</span>
+      </div>
+      <div class="user-profile-badge" id="user-badge" onclick="openNameModal()">
+        <i class="fa-solid fa-user-ninja"></i>
+        <span id="player-display-name">Kerala Champion</span>
+        <i class="fa-solid fa-pen-to-square edit-icon"></i>
+      </div>
+    </header>
+
+    <!-- EVERGREEN KERALA ONAM COVER PAGE -->
+    <div class="onam-cover-screen active" id="onam-cover-screen">
+      <!-- Kerala Backwater Sun Aura & Festive Light Beams -->
+      <div class="cover-sun-aura"></div>
+      <div class="cover-light-beams"></div>
+
+      <!-- CSS Banana Leaf / Coconut Frond Decorative Silhouettes -->
+      <div class="css-leaf leaf-left"></div>
+      <div class="css-leaf leaf-right"></div>
+      
+      <!-- CSS Sacred Pookalam & Floral Mandala -->
+      <div class="pookalam-art-container">
+        <div class="pookalam-circle ring-glow"></div>
+        <div class="pookalam-circle ring-outer"></div>
+        <div class="pookalam-circle ring-petals">
+          <span class="p-petal pt1">🌼</span>
+          <span class="p-petal pt2">🌺</span>
+          <span class="p-petal pt3">🌸</span>
+          <span class="p-petal pt4">🌼</span>
+          <span class="p-petal pt5">🌺</span>
+          <span class="p-petal pt6">🌸</span>
+        </div>
+        <div class="pookalam-circle ring-middle"></div>
+        <div class="pookalam-circle ring-inner"></div>
+        <div class="pookalam-center-blossom">🌸</div>
+      </div>
+
+      <div class="cover-hero">
+        <div class="onam-badge"><span class="badge-sparkle">✨</span> ONAM SPECIAL <span class="badge-sparkle">✨</span></div>
+        <h1 class="cover-title">THALAYANA ADI</h1>
+        <p class="cover-subtitle">THE ULTIMATE ONAM PILLOW BATTLE</p>
+      </div>
+
+      <div class="cover-actions">
+        <button class="btn btn-cover-play" onclick="enterGameLobby()">
+          <span>PLAY NOW</span> <i class="fa-solid fa-play"></i>
+        </button>
+
+        <div class="cover-sub-actions">
+          <button class="btn btn-cover-sub" onclick="openLeaderboardModal()">
+            <i class="fa-solid fa-trophy"></i> LEADERBOARD
+          </button>
+          <button class="btn btn-cover-sub" onclick="toggleAudioMute()" id="cover-mute-btn">
+            <i class="fa-solid fa-volume-high"></i> MUSIC: ON
+          </button>
+        </div>
+      </div>
+
+      <!-- Festive Petals Ambient Layer -->
+      <div class="cover-festive-note">“Welcome to Onam — 1v1 Festive Pillow Combat”</div>
+
+      <!-- Creator Watermark -->
+      <div class="creator-watermark">a zkyll production</div>
+    </div>
+
+    <!-- PERSISTENT MUSIC WAVE BAR -->
+    <div class="music-wave-bar" id="music-wave-bar" onclick="toggleAudioMute()" title="Click to Toggle Music">
+      <div class="music-bar-icon"><i class="fa-solid fa-music"></i></div>
+      <div class="wave-lines-container">
+        <span class="wave-bar b1"></span>
+        <span class="wave-bar b2"></span>
+        <span class="wave-bar b3"></span>
+        <span class="wave-bar b4"></span>
+        <span class="wave-bar b5"></span>
+      </div>
+      <div class="music-track-info" id="music-track-title">Onam Special Soundtrack</div>
+    </div>
+
+    <!-- MAIN MULTIPLAYER LOBBY SCREEN -->
+    <div class="overlay-screen" id="menu-screen">
+      <div class="hero-banner">
+        <div class="onam-decoration">🌼 🌺 🌸 🌼 🌺 🌸</div>
+        <h1 class="hero-title">THALAYANA ADI</h1>
+        <p class="hero-subtitle">1v1 Real-Time Kerala Backwater Combat</p>
+      </div>
+
+      <div class="menu-card glass-panel">
+        <button class="btn btn-primary btn-lg" onclick="showRoomModal()">
+          <i class="fa-solid fa-users"></i> PLAY WITH FRIEND
+        </button>
+
+        <button class="btn btn-accent btn-lg" onclick="startMatchmaking()">
+          <i class="fa-solid fa-bolt"></i> FIND MATCH (RANDOM)
+        </button>
+
+        <button class="btn btn-secondary" onclick="openActivePlayersModal()">
+          <i class="fa-solid fa-globe"></i> ACTIVE PLAYERS <span class="badge" id="online-count-badge">0</span>
+        </button>
+
+        <div class="button-row">
+          <button class="btn btn-dark" onclick="openLeaderboardModal()">
+            <i class="fa-solid fa-trophy"></i> LEADERBOARD
+          </button>
+          <button class="btn btn-dark" onclick="openHowToPlayModal()">
+            <i class="fa-solid fa-gamepad"></i> HOW TO PLAY
+          </button>
+        </div>
+
+        <button class="btn btn-outline btn-sm" onclick="returnToCoverScreen()">
+          <i class="fa-solid fa-arrow-left"></i> BACK TO COVER
+        </button>
+      </div>
+    </div>
+
+    <!-- USERNAME ENTRY MODAL -->
+    <div class="modal" id="username-modal">
+      <div class="modal-content glass-panel glow-border">
+        <h2><i class="fa-solid fa-id-card"></i> ENTER YOUR CHAMPION NAME</h2>
+        <p>Choose your display name for live competitive leaderboard ranking.</p>
+        <div class="input-group">
+          <input type="text" id="username-input" placeholder="e.g. Arun, Maya, Rahul" maxlength="15">
+          <button class="btn btn-primary" onclick="confirmUsername()">CONFIRM</button>
+        </div>
+        <div class="error-text" id="username-error"></div>
+      </div>
+    </div>
+
+    <!-- PLAY WITH FRIEND / ROOM MODAL -->
+    <div class="modal" id="room-modal">
+      <div class="modal-content glass-panel">
+        <button class="close-btn" onclick="closeModal('room-modal')">&times;</button>
+        <h2><i class="fa-solid fa-door-open"></i> PLAY WITH FRIEND</h2>
+
+        <div class="room-section">
+          <h3>CREATE PRIVATE ROOM</h3>
+          <button class="btn btn-accent btn-block" onclick="createPrivateRoom()">
+            <i class="fa-solid fa-plus-circle"></i> CREATE ROOM
+          </button>
+          <div id="created-room-box" class="room-code-box hidden">
+            <span>YOUR ROOM CODE:</span>
+            <div class="code-display" id="generated-code-text">ONAM-XXXX</div>
+            <button class="btn btn-secondary btn-sm" onclick="copyRoomCode()">
+              <i class="fa-solid fa-copy"></i> COPY CODE
+            </button>
+            <p class="waiting-pulse"><i class="fa-solid fa-spinner fa-spin"></i> Waiting for friend to join...</p>
+          </div>
+        </div>
+
+        <div class="divider"><span>OR</span></div>
+
+        <div class="room-section">
+          <h3>JOIN ROOM</h3>
+          <div class="input-group">
+            <input type="text" id="join-code-input" placeholder="ENTER ROOM CODE (e.g. ONAM-7K4P)" style="text-transform:uppercase;">
+            <button class="btn btn-primary" onclick="joinPrivateRoom()">JOIN</button>
+          </div>
+          <div class="error-text" id="room-error"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- MATCHMAKING SEARCH MODAL -->
+    <div class="modal" id="matchmaking-modal">
+      <div class="modal-content glass-panel center-content">
+        <div class="match-radar">
+          <div class="radar-circle"></div>
+          <i class="fa-solid fa-crosshairs radar-icon"></i>
+        </div>
+        <h2>FINDING OPPONENT...</h2>
+        <p>Searching active Kerala backwater arenas for a rival...</p>
+        <button class="btn btn-danger" onclick="cancelMatchmaking()">
+          <i class="fa-solid fa-xmark"></i> CANCEL SEARCH
+        </button>
+      </div>
+    </div>
+
+    <!-- ACTIVE PLAYERS MODAL -->
+    <div class="modal" id="active-players-modal">
+      <div class="modal-content glass-panel">
+        <button class="close-btn" onclick="closeModal('active-players-modal')">&times;</button>
+        <h2><i class="fa-solid fa-users"></i> ACTIVE ONLINE PLAYERS</h2>
+        <div class="player-list-container" id="active-players-list">
+          <p class="empty-text">Loading online participants...</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- INCOMING CHALLENGE MODAL -->
+    <div class="modal" id="challenge-modal">
+      <div class="modal-content glass-panel glow-border center-content">
+        <div class="challenge-icon">⚔️</div>
+        <h2 id="challenger-name-text">ARUN HAS CHALLENGED YOU!</h2>
+        <p>Do you accept a 1v1 pillow fight on the wooden log?</p>
+        <div class="button-row">
+          <button class="btn btn-primary" onclick="acceptChallenge()"><i class="fa-solid fa-check"></i> ACCEPT</button>
+          <button class="btn btn-danger" onclick="declineChallenge()"><i class="fa-solid fa-xmark"></i> DECLINE</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- LIVE DYNAMIC LEADERBOARD MODAL (CLEAN RESET - NO DUMMY DATA) -->
+    <div class="modal" id="leaderboard-modal">
+      <div class="modal-content glass-panel wide-modal">
+        <button class="close-btn" onclick="closeModal('leaderboard-modal')">&times;</button>
+        <h2><i class="fa-solid fa-trophy"></i> LIVE GLOBAL LEADERBOARD</h2>
+        <p class="modal-subtitle">Ranked strictly by Real Player Matches Won, Round Wins & Score</p>
+        
+        <div class="table-responsive">
+          <table class="leaderboard-table">
+            <thead>
+              <tr>
+                <th>RANK</th>
+                <th>PLAYER</th>
+                <th>MATCHES</th>
+                <th>WINS</th>
+                <th>LOSSES</th>
+                <th>ROUNDS</th>
+                <th>DAMAGE</th>
+                <th>WIN %</th>
+                <th>SCORE</th>
+                <th>STREAK</th>
+              </tr>
+            </thead>
+            <tbody id="leaderboard-tbody">
+              <!-- Rendered Dynamically from Real Players -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- HOW TO PLAY MODAL -->
+    <div class="modal" id="how-to-play-modal">
+      <div class="modal-content glass-panel">
+        <button class="close-btn" onclick="closeModal('how-to-play-modal')">&times;</button>
+        <h2><i class="fa-solid fa-gamepad"></i> HOW TO PLAY</h2>
+        <div class="guide-grid">
+          <div class="guide-card">
+            <i class="fa-solid fa-arrows-left-right"></i>
+            <h4>JOYSTICK / MOVEMENT</h4>
+            <p>Use the <strong>Left Joystick / Arrows</strong> to balance along the wooden log.</p>
+          </div>
+          <div class="guide-card">
+            <i class="fa-solid fa-bolt"></i>
+            <h4>4 PILLOW ATTACKS</h4>
+            <p>Choose from <strong>Quick Hit</strong>, <strong>Power Smash</strong>, <strong>Combo Strike</strong>, or <strong>Ultimate Slam</strong>!</p>
+          </div>
+          <div class="guide-card">
+            <i class="fa-solid fa-battery-three-quarters"></i>
+            <h4>ENERGY SYSTEM</h4>
+            <p>Hits drain energy (100 Max). 0 Energy triggers KO plunge!</p>
+          </div>
+          <div class="guide-card">
+            <i class="fa-solid fa-water"></i>
+            <h4>3 ROUND MATCHES</h4>
+            <p>Play 3 fast 60-second rounds. First to 2 round wins wins!</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- IN-GAME TOP BAR (Title, Energy Bars, Round & Timer) -->
+    <div class="in-game-top-bar hidden" id="game-hud">
+      <!-- Left: RED Player Energy -->
+      <div class="hud-player-box red-hud">
+        <div class="hud-player-name red-name" id="hud-red-name">RED</div>
+        <div class="hud-energy-track">
+          <div class="hud-energy-fill red-energy-fill" id="hud-red-energy-fill" style="width: 100%;"></div>
+          <span class="hud-hp-text" id="hud-red-energy-text">100 HP</span>
+        </div>
+        <div class="hud-ult-track"><div class="hud-ult-fill" id="hud-red-ult-fill" style="width:0%;"></div></div>
+      </div>
+
+      <!-- Center: Title, Round & Timer -->
+      <div class="hud-center-title-box">
+        <div class="game-top-title">🌸 THALAYANA ADI 🌸</div>
+        <div class="game-top-meta">
+          <span class="game-round-pill" id="hud-round-indicator">ROUND 1</span>
+          <span class="game-timer-pill" id="hud-match-timer">01:00</span>
+        </div>
+      </div>
+
+      <!-- Right: BLUE Player Energy -->
+      <div class="hud-player-box blue-hud">
+        <div class="hud-player-name blue-name" id="hud-blue-name">BLUE</div>
+        <div class="hud-energy-track">
+          <div class="hud-energy-fill blue-energy-fill" id="hud-blue-energy-fill" style="width: 100%;"></div>
+          <span class="hud-hp-text" id="hud-blue-energy-text">100 HP</span>
+        </div>
+        <div class="hud-ult-track"><div class="hud-ult-fill" id="hud-blue-ult-fill" style="width:0%;"></div></div>
+      </div>
+
+      <!-- Debug Telemetry Panel -->
+      <div class="debug-overlay hidden" id="debug-overlay">
+        <h4>DEBUG TELEMETRY (Press ~ to hide)</h4>
+        <div id="debug-text">Loading physics telemetry...</div>
+      </div>
+    </div>
+
+    <!-- IN-GAME BOTTOM SCORECARD -->
+    <div class="in-game-bottom-scorecard hidden" id="game-scorecard">
+      <div class="bottom-score-wrapper">
+        <div class="score-team red-team">
+          <span class="score-team-label">RED</span>
+          <span class="score-team-num" id="hud-red-score-num">0</span>
+        </div>
+        <div class="score-divider">VS</div>
+        <div class="score-team blue-team">
+          <span class="score-team-num" id="hud-blue-score-num">0</span>
+          <span class="score-team-label">BLUE</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ANNOUNCER & CENTER POPUPS OVERLAY -->
+    <div class="announcer-overlay hidden" id="announcer-overlay">
+      <div class="announcer-text" id="announcer-text">3</div>
+    </div>
+    
+    <!-- CENTER COMBAT ANNOUNCEMENT POPUP -->
+    <div class="combat-popup-container hidden" id="combat-popup-container">
+      <div class="combat-popup-text" id="combat-popup-text">PERFECT HIT!</div>
+    </div>
+
+    <!-- FINAL MATCH RESULT + GLOBAL LEADERBOARD SCREEN -->
+    <div class="modal" id="match-over-modal">
+      <div class="modal-content glass-panel result-modal-panel">
+        <div class="result-header">
+          <div class="result-tag">MATCH COMPLETE</div>
+          <h1 class="winner-announce-title" id="match-winner-title">WINNER: ARUN</h1>
+          
+          <!-- Final 3-Round Score Banner -->
+          <div class="final-match-scorecard">
+            <div class="scorecard-player-col red-side">
+              <span class="sc-name" id="final-red-name">RED</span>
+              <span class="sc-score" id="final-red-score-val">0</span>
+            </div>
+            <div class="scorecard-vs-badge">
+              <span class="sc-vs-text">—</span>
+              <div class="sc-rounds-list" id="final-rounds-breakdown">
+                <span>ROUND 1</span>
+                <span>ROUND 2</span>
+                <span>ROUND 3</span>
+              </div>
+            </div>
+            <div class="scorecard-player-col blue-side">
+              <span class="sc-score" id="final-blue-score-val">0</span>
+              <span class="sc-name" id="final-blue-name">BLUE</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Global Top 10 Leaderboard Table (Real Players Only) -->
+        <div class="result-leaderboard-section">
+          <div class="lb-heading"><i class="fa-solid fa-trophy"></i> GLOBAL TOP 10</div>
+          <div class="table-responsive">
+            <table class="leaderboard-table result-table">
+              <thead>
+                <tr>
+                  <th>RANK</th>
+                  <th>PLAYER</th>
+                  <th>WINS</th>
+                  <th>ROUNDS WON</th>
+                  <th>SCORE</th>
+                </tr>
+              </thead>
+              <tbody id="result-top10-tbody">
+                <!-- Populated Dynamically -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Player's Current Global Position Card -->
+        <div class="user-global-position-card" id="user-global-position-card">
+          <div class="ugp-header">YOUR GLOBAL POSITION</div>
+          <div class="ugp-content" id="ugp-content">
+            <div class="ugp-rank" id="ugp-rank">#1</div>
+            <div class="ugp-details">
+              <div class="ugp-name" id="ugp-name">Player</div>
+              <div class="ugp-stats">
+                <span>WINS: <strong id="ugp-wins">0</strong></span>
+                <span>ROUNDS WON: <strong id="ugp-rounds">0</strong></span>
+                <span>SCORE: <strong id="ugp-score">0</strong></span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 3 Standard Navigation Buttons -->
+        <div class="result-actions-row">
+          <button class="btn btn-primary" onclick="requestRematch()" id="rematch-btn">
+            <i class="fa-solid fa-rotate-right"></i> REMATCH (<span id="rematch-count">0</span>/2)
+          </button>
+          <button class="btn btn-secondary" onclick="returnToLobby()">
+            <i class="fa-solid fa-users"></i> RETURN TO LOBBY
+          </button>
+          <button class="btn btn-dark" onclick="returnToCoverScreen()">
+            <i class="fa-solid fa-house"></i> MAIN MENU
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- COMPACT MOBILE CONTROLS (JOYSTICK + 4 ACTION BUTTONS) -->
+    <div class="mobile-controls hidden" id="mobile-controls">
+      <!-- Left Movement Joystick / D-Pad -->
+      <div class="joystick-pad">
+        <button class="touch-btn move-btn" id="btn-left"><i class="fa-solid fa-arrow-left"></i></button>
+        <button class="touch-btn move-btn" id="btn-right"><i class="fa-solid fa-arrow-right"></i></button>
+      </div>
+
+      <!-- Right 4 Action Attack Buttons -->
+      <div class="action-buttons-cluster">
+        <button class="action-btn btn-quick" id="btn-attack-quick" title="Quick Hit (1)">
+          <i class="fa-solid fa-bolt"></i>
+          <span>QUICK</span>
+        </button>
+        <button class="action-btn btn-power" id="btn-attack-power" title="Power Smash (2)">
+          <i class="fa-solid fa-burst"></i>
+          <span>POWER</span>
+        </button>
+        <button class="action-btn btn-combo" id="btn-attack-combo" title="Combo Strike (3)">
+          <i class="fa-solid fa-wand-magic-sparkles"></i>
+          <span>COMBO</span>
+        </button>
+        <button class="action-btn btn-ultimate" id="btn-attack-ultimate" title="Ultimate Slam (4)">
+          <i class="fa-solid fa-crown"></i>
+          <span>ULTIMATE</span>
+        </button>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Socket.io Library -->
+  <script src="/socket.io/socket.io.js"></script>
+  <!-- Main Game Client Engine -->
+  <script src="game.js"></script>
+  <!-- Service Worker Registration for PWA Offline Cache -->
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js').catch(() => {});
+      });
+    }
+  </script>
+</body>
+</html>
