@@ -92,6 +92,97 @@ html, body {
   box-shadow: inset 0 0 100px rgba(251, 133, 0, 0.5);
 }
 
+/* Orientation Warning Screen (Enforce Landscape 16:9 on Phones) */
+.orientation-warning {
+  position: fixed;
+  top: 0; left: 0; width: 100%; height: 100%;
+  z-index: 9999;
+  background: radial-gradient(circle at 50% 50%, #0B4428 0%, #032314 60%, #02140B 100%);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  padding: 24px;
+  backdrop-filter: blur(20px);
+}
+
+.orient-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  max-width: 380px;
+}
+
+.phone-rotate-icon {
+  font-size: 3.5rem;
+  color: #FFB703;
+  animation: rotatePhoneAnim 2s infinite ease-in-out;
+}
+
+@keyframes rotatePhoneAnim {
+  0% { transform: rotate(0deg); }
+  50% { transform: rotate(-90deg); }
+  100% { transform: rotate(0deg); }
+}
+
+.orient-box h2 {
+  font-size: 1.4rem;
+  font-weight: 900;
+  color: #FFFFFF;
+  letter-spacing: 1px;
+}
+
+.orient-box p {
+  font-size: 0.95rem;
+  color: #A0C4E2;
+  line-height: 1.4;
+}
+
+.orient-badge {
+  font-size: 0.8rem;
+  font-weight: 800;
+  color: #071722;
+  background: linear-gradient(135deg, #FFB703, #FB8500);
+  padding: 6px 14px;
+  border-radius: 20px;
+  letter-spacing: 1px;
+}
+
+/* Leaderboard Search Box */
+.lb-search-box {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 183, 3, 0.3);
+  border-radius: 12px;
+  padding: 10px 16px;
+  width: 100%;
+  margin-bottom: 12px;
+}
+
+.lb-search-box i {
+  color: #FFB703;
+  font-size: 1.1rem;
+}
+
+.lb-search-box input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: #FFFFFF;
+  font-family: var(--font-family);
+  font-size: 0.95rem;
+  user-select: text;
+  -webkit-user-select: text;
+}
+
+.lb-search-box input::placeholder {
+  color: rgba(160, 196, 226, 0.7);
+}
+
 /* Glassmorphism Panel Common Utility */
 .glass-panel {
   background: var(--glass-bg);

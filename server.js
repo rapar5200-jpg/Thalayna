@@ -72,9 +72,10 @@ async function saveLeaderboard(board) {
   if (firestoreDb) {
     try {
       const batch = firestoreDb.batch();
-      const topEntries = board.slice(0, 50);
+      const topEntries = board.slice(0, 100);
       topEntries.forEach((player, idx) => {
-        const docRef = firestoreDb.collection('leaderboards').doc(player.name.replace(/[^a-zA-Z0-9_-]/g, '_'));
+        const docId = (player.deviceId || player.name).replace(/[^a-zA-Z0-9_-]/g, '_');
+        const docRef = firestoreDb.collection('leaderboards').doc(docId);
         batch.set(docRef, { ...player, rank: idx + 1, updatedAt: new Date().toISOString() }, { merge: true });
       });
       await batch.commit();
@@ -94,14 +95,54 @@ function sortLeaderboard(board) {
   });
 }
 
-function updatePlayerStats(playerName, isMatchWinner, roundsWon, roundsLost, damageGiven, damageTaken, scoreEarned) {
+// Generate Unique Username guaranteeing no duplicates across all players
+async function generateUniqueUsername(desiredName, deviceId) {
+  let baseName = (desiredName || 'Champion').trim().replace(/[^a-zA-Z0-9_\s]/g, '').substring(0, 12).trim() || 'Champion';
+  const board = loadLeaderboard();
+
+  // If the same device already has this exact name, keep it
+  const existingForDevice = board.find(p => p.deviceId && p.deviceId === deviceId);
+  if (existingForDevice && existingForDevice.name.toLowerCase() === baseName.toLowerCase()) {
+    return existingForDevice.name;
+  }
+
+  // Check collision locally
+  let candidate = baseName;
+  let collision = board.some(p => p.name.toLowerCase() === candidate.toLowerCase() && p.deviceId !== deviceId);
+
+  // Check collision in Firestore if active
+  if (!collision && firestoreDb) {
+    try {
+      const snap = await firestoreDb.collection('leaderboards').where('nameLower', '==', candidate.toLowerCase()).get();
+      if (!snap.empty) {
+        const doc = snap.docs[0].data();
+        if (doc.deviceId !== deviceId) collision = true;
+      }
+    } catch (e) {}
+  }
+
+  let counter = 1;
+  while (collision) {
+    const randomSuffix = Math.floor(100 + Math.random() * 900);
+    candidate = `${baseName.substring(0, 8)}_${randomSuffix}`;
+    collision = board.some(p => p.name.toLowerCase() === candidate.toLowerCase() && p.deviceId !== deviceId);
+    counter++;
+    if (counter > 15) break;
+  }
+
+  return candidate;
+}
+
+function updatePlayerStats(playerName, deviceId, isMatchWinner, roundsWon, roundsLost, damageGiven, damageTaken, scoreEarned) {
   if (!playerName || playerName.trim() === '') return;
   const board = loadLeaderboard();
-  let entry = board.find(p => p.name.toLowerCase() === playerName.toLowerCase());
+  let entry = board.find(p => (p.deviceId && deviceId && p.deviceId === deviceId) || p.name.toLowerCase() === playerName.toLowerCase());
 
   if (!entry) {
     entry = {
       name: playerName,
+      nameLower: playerName.toLowerCase(),
+      deviceId: deviceId || null,
       totalMatches: 0,
       matchesWon: 0,
       matchesLost: 0,
@@ -112,9 +153,14 @@ function updatePlayerStats(playerName, isMatchWinner, roundsWon, roundsLost, dam
       winPercentage: 0,
       score: 0,
       winStreak: 0,
-      bestWinStreak: 0
+      bestWinStreak: 0,
+      timestamp: new Date().toISOString()
     };
     board.push(entry);
+  } else {
+    entry.name = playerName;
+    entry.nameLower = playerName.toLowerCase();
+    if (deviceId) entry.deviceId = deviceId;
   }
 
   entry.totalMatches += 1;
@@ -133,6 +179,7 @@ function updatePlayerStats(playerName, isMatchWinner, roundsWon, roundsLost, dam
   entry.energyDamageTaken += damageTaken;
   entry.score += scoreEarned;
   entry.winPercentage = Math.round((entry.matchesWon / entry.totalMatches) * 100);
+  entry.timestamp = new Date().toISOString();
 
   sortLeaderboard(board);
   saveLeaderboard(board);
@@ -576,6 +623,7 @@ class GameRoom {
 
     updatePlayerStats(
       this.players.red.name,
+      this.players.red.deviceId,
       redWon,
       this.players.red.roundWins,
       this.players.blue.roundWins,
@@ -585,6 +633,7 @@ class GameRoom {
     );
     updatePlayerStats(
       this.players.blue.name,
+      this.players.blue.deviceId,
       !redWon,
       this.players.blue.roundWins,
       this.players.red.roundWins,
@@ -625,13 +674,26 @@ class GameRoom {
 }
 
 io.on('connection', (socket) => {
-  onlinePlayers.set(socket.id, { name: 'Player', status: 'idle' });
+  onlinePlayers.set(socket.id, {
+    socketId: socket.id,
+    name: `Player_${socket.id.substring(0, 4)}`,
+    deviceId: null,
+    status: 'idle'
+  });
 
-  socket.on('set_username', (name) => {
-    const cleanName = (name || '').trim().substring(0, 15) || `Player_${socket.id.substring(0, 4)}`;
+  io.emit('online_players_list', getOnlinePlayersPayload());
+
+  socket.on('set_username', async (data) => {
+    let rawName = typeof data === 'object' ? data.name : data;
+    let deviceId = typeof data === 'object' ? data.deviceId : null;
+
+    const uniqueName = await generateUniqueUsername(rawName, deviceId);
     const playerData = onlinePlayers.get(socket.id);
-    if (playerData) playerData.name = cleanName;
-    socket.emit('username_confirmed', cleanName);
+    if (playerData) {
+      playerData.name = uniqueName;
+      playerData.deviceId = deviceId;
+    }
+    socket.emit('username_confirmed', { name: uniqueName, deviceId });
     io.emit('online_players_list', getOnlinePlayersPayload());
   });
 

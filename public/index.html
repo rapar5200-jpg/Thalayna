@@ -35,6 +35,16 @@
   <!-- Custom Background Music Audio Player -->
   <audio id="bgm-player" src="/assets/bgm.mp3" loop preload="auto"></audio>
 
+  <!-- Rotate Phone to Landscape Warning Overlay for Mobile Gameplay -->
+  <div id="orientation-warning" class="orientation-warning hidden">
+    <div class="orient-box">
+      <div class="phone-rotate-icon"><i class="fa-solid fa-mobile-screen-button"></i></div>
+      <h2>PLEASE ROTATE YOUR DEVICE</h2>
+      <p>THALAYANA ADI is optimized for <strong>Landscape 16:9</strong> battle arena mode.</p>
+      <div class="orient-badge">⚔️ LANDSCAPE MODE REQUIRED ⚔️</div>
+    </div>
+  </div>
+
   <!-- Screen Heartbeat & Speedline Overlay Filters -->
   <div id="heartbeat-overlay" class="heartbeat-overlay hidden"></div>
   <div id="speedlines-overlay" class="speedlines-overlay hidden"></div>
@@ -256,6 +266,11 @@
         <h2><i class="fa-solid fa-trophy"></i> LIVE GLOBAL LEADERBOARD</h2>
         <p class="modal-subtitle">Ranked strictly by Real Player Matches Won, Round Wins & Score</p>
         
+        <div class="lb-search-box">
+          <i class="fa-solid fa-magnifying-glass"></i>
+          <input type="text" id="leaderboard-search-input" placeholder="Search champion by username..." oninput="filterLeaderboard()">
+        </div>
+
         <div class="table-responsive">
           <table class="leaderboard-table">
             <thead>

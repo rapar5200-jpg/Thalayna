@@ -52,6 +52,55 @@ function resizeCanvas() {
 window.addEventListener('resize', resizeCanvas);
 resizeCanvas();
 
+// Persistent One-Device Identity (UUID generation without relying on shared IPs)
+function getOrCreateDeviceId() {
+  let id = localStorage.getItem('onam_device_id');
+  if (!id) {
+    id = 'dev_' + Math.random().toString(36).substring(2, 10) + '_' + Date.now().toString(36);
+    localStorage.setItem('onam_device_id', id);
+  }
+  return id;
+}
+const localDeviceId = getOrCreateDeviceId();
+
+// Mobile Haptic Feedback Helper
+function triggerHaptic(type = 'light') {
+  if ('vibrate' in navigator) {
+    try {
+      if (type === 'light') navigator.vibrate(15);
+      else if (type === 'medium') navigator.vibrate(35);
+      else if (type === 'heavy') navigator.vibrate([40, 20, 60]);
+    } catch (e) {}
+  }
+}
+
+// Orientation & Landscape 16:9 Controller for Mobile Devices
+function checkOrientation() {
+  const isMobile = window.innerWidth <= 900 || ('ontouchstart' in window);
+  const isPortrait = window.innerHeight > window.innerWidth;
+  const orientEl = document.getElementById('orientation-warning');
+  if (orientEl) {
+    // Show rotation requirement if on mobile and in portrait mode
+    if (isMobile && isPortrait) {
+      orientEl.classList.remove('hidden');
+    } else {
+      orientEl.classList.add('hidden');
+    }
+  }
+}
+
+window.addEventListener('resize', () => {
+  resizeCanvas();
+  checkOrientation();
+});
+window.addEventListener('orientationchange', () => {
+  setTimeout(() => {
+    resizeCanvas();
+    checkOrientation();
+  }, 200);
+});
+checkOrientation();
+
 // User Credentials & Room State
 let localPlayerName = localStorage.getItem('onam_player_name') || '';
 let isAudioMuted = false;
@@ -273,7 +322,7 @@ window.addEventListener('keyup', (e) => {
 window.addEventListener('blur', clearKeys);
 window.addEventListener('focus', clearKeys);
 
-// Mobile Touch Controls & 4 Attack Buttons Binding
+// Mobile Touch Controls & 4 Attack Buttons Binding (Universal Pointer + Touch Events)
 const btnLeft = document.getElementById('btn-left');
 const btnRight = document.getElementById('btn-right');
 const btnQuick = document.getElementById('btn-attack-quick');
@@ -281,30 +330,60 @@ const btnPower = document.getElementById('btn-attack-power');
 const btnCombo = document.getElementById('btn-attack-combo');
 const btnUltimate = document.getElementById('btn-attack-ultimate');
 
-if (btnLeft && btnRight) {
-  btnLeft.addEventListener('touchstart', (e) => { e.preventDefault(); keys.left = true; sendInputState(); });
-  btnLeft.addEventListener('touchend', (e) => { e.preventDefault(); keys.left = false; sendInputState(); });
-  btnRight.addEventListener('touchstart', (e) => { e.preventDefault(); keys.right = true; sendInputState(); });
-  btnRight.addEventListener('touchend', (e) => { e.preventDefault(); keys.right = false; sendInputState(); });
+function bindDirectionButton(btnEl, direction) {
+  if (!btnEl) return;
+  
+  const handleDown = (e) => {
+    e.preventDefault();
+    keys[direction] = true;
+    triggerHaptic('light');
+    sendInputState();
+  };
+
+  const handleUp = (e) => {
+    e.preventDefault();
+    keys[direction] = false;
+    sendInputState();
+  };
+
+  btnEl.addEventListener('pointerdown', handleDown);
+  btnEl.addEventListener('pointerup', handleUp);
+  btnEl.addEventListener('pointercancel', handleUp);
+  btnEl.addEventListener('touchstart', handleDown, { passive: false });
+  btnEl.addEventListener('touchend', handleUp, { passive: false });
 }
+
+bindDirectionButton(btnLeft, 'left');
+bindDirectionButton(btnRight, 'right');
 
 function bindAttackButton(btnEl, attackType) {
   if (!btnEl) return;
-  btnEl.addEventListener('touchstart', (e) => {
+
+  const handleAttackDown = (e) => {
     e.preventDefault();
     keys.attackType = attackType;
+    triggerHaptic(attackType === 'ultimate' ? 'heavy' : 'medium');
     sendInputState();
-  });
-  btnEl.addEventListener('touchend', (e) => {
+  };
+
+  const handleAttackUp = (e) => {
     e.preventDefault();
     keys.attackType = null;
     sendInputState();
-  });
+  };
+
+  btnEl.addEventListener('pointerdown', handleAttackDown);
+  btnEl.addEventListener('pointerup', handleAttackUp);
+  btnEl.addEventListener('pointercancel', handleAttackUp);
+  btnEl.addEventListener('touchstart', handleAttackDown, { passive: false });
+  btnEl.addEventListener('touchend', handleAttackUp, { passive: false });
+
   btnEl.addEventListener('click', (e) => {
     e.preventDefault();
     keys.attackType = attackType;
+    triggerHaptic('medium');
     sendInputState();
-    setTimeout(() => { keys.attackType = null; sendInputState(); }, 150);
+    setTimeout(() => { keys.attackType = null; sendInputState(); }, 120);
   });
 }
 
@@ -323,14 +402,18 @@ function sendInputState() {
 
 // Socket Network Handlers
 socket.on('connect', () => {
-  if (localPlayerName) socket.emit('set_username', localPlayerName);
-  else openNameModal();
+  if (localPlayerName) {
+    socket.emit('set_username', { name: localPlayerName, deviceId: localDeviceId });
+  } else {
+    openNameModal();
+  }
 });
 
-socket.on('username_confirmed', (name) => {
-  localPlayerName = name;
-  localStorage.setItem('onam_player_name', name);
-  document.getElementById('player-display-name').innerText = name;
+socket.on('username_confirmed', (res) => {
+  const confirmedName = typeof res === 'object' ? res.name : res;
+  localPlayerName = confirmedName;
+  localStorage.setItem('onam_player_name', confirmedName);
+  document.getElementById('player-display-name').innerText = confirmedName;
   closeModal('username-modal');
 });
 
@@ -511,8 +594,9 @@ socket.on('rematch_update', ({ votes }) => {
 });
 
 socket.on('leaderboard_update', (board) => {
-  renderLeaderboard(board);
-  renderResultTop10(board);
+  latestLeaderboardData = board || [];
+  renderLeaderboard(latestLeaderboardData);
+  renderResultTop10(latestLeaderboardData);
 });
 
 socket.on('opponent_disconnected', () => {
@@ -521,14 +605,32 @@ socket.on('opponent_disconnected', () => {
 });
 
 // UI Modal Handlers & Dynamic Leaderboard
-function openNameModal() { openModal('username-modal'); }
+let latestLeaderboardData = [];
+
+function openNameModal() { 
+  openModal('username-modal'); 
+  const input = document.getElementById('username-input');
+  if (input && localPlayerName) input.value = localPlayerName;
+}
+
 function confirmUsername() {
   const input = document.getElementById('username-input').value.trim();
   if (input.length < 2) {
     document.getElementById('username-error').innerText = 'Name must be at least 2 characters.';
     return;
   }
-  socket.emit('set_username', input);
+  document.getElementById('username-error').innerText = '';
+  socket.emit('set_username', { name: input, deviceId: localDeviceId });
+}
+
+function filterLeaderboard() {
+  const query = (document.getElementById('leaderboard-search-input')?.value || '').toLowerCase().trim();
+  if (!query) {
+    renderLeaderboard(latestLeaderboardData);
+  } else {
+    const filtered = latestLeaderboardData.filter(p => p.name.toLowerCase().includes(query));
+    renderLeaderboard(filtered);
+  }
 }
 
 function showRoomModal() { openModal('room-modal'); }
