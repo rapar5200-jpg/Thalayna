@@ -606,14 +606,15 @@ socket.on('round_over', ({ roundWinner, reason, redRoundWins, blueRoundWins }) =
   document.getElementById('hud-blue-score-num').innerText = blueRoundWins;
 });
 
-socket.on('match_over', ({ winnerName, red, blue }) => {
+socket.on('match_over', ({ winnerName, isDraw, red, blue }) => {
   clearKeys();
   spawnFireworks(WORLD.WIDTH / 2, 250);
   
   // Play Onam cover song softly on match complete
   playCoverMusic(0.18);
 
-  document.getElementById('match-winner-title').innerText = `🏆 WINNER: ${winnerName.toUpperCase()}`;
+  const winnerTitle = isDraw ? '🤝 MATCH DRAW!' : `🏆 CHAMPION: ${winnerName.toUpperCase()}`;
+  document.getElementById('match-winner-title').innerText = winnerTitle;
   document.getElementById('final-red-name').innerText = red.name;
   document.getElementById('final-red-score-val').innerText = red.roundWins;
   document.getElementById('final-blue-name').innerText = blue.name;

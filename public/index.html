@@ -181,6 +181,7 @@
     <!-- USERNAME ENTRY MODAL — Real-time availability check -->
     <div class="modal" id="username-modal">
       <div class="modal-content glass-panel glow-border username-modal-panel">
+        <button class="close-btn" onclick="closeModal('username-modal')">&times;</button>
         <div class="username-modal-header">
           <div class="username-modal-icon">🥊</div>
           <h2>CHOOSE YOUR CHAMPION NAME</h2>
@@ -215,6 +216,10 @@
 
         <button class="btn btn-primary btn-block btn-confirm-username" id="username-confirm-btn" onclick="confirmUsername()" disabled>
           <i class="fa-solid fa-check"></i> CONFIRM NAME
+        </button>
+
+        <button class="btn btn-outline btn-block btn-sm" onclick="closeModal('username-modal')" style="margin-top: -6px;">
+          <i class="fa-solid fa-arrow-left"></i> BACK
         </button>
 
         <p class="username-modal-note">
@@ -255,6 +260,12 @@
           </div>
           <div class="error-text" id="room-error"></div>
         </div>
+
+        <div style="display: flex; justify-content: center; margin-top: 6px;">
+          <button class="btn btn-outline btn-sm" onclick="closeModal('room-modal')">
+            <i class="fa-solid fa-arrow-left"></i> BACK TO LOBBY
+          </button>
+        </div>
       </div>
     </div>
 
@@ -280,6 +291,11 @@
         <h2><i class="fa-solid fa-users"></i> ACTIVE ONLINE PLAYERS</h2>
         <div class="player-list-container" id="active-players-list">
           <p class="empty-text">Loading online participants...</p>
+        </div>
+        <div style="display: flex; justify-content: center; margin-top: 10px;">
+          <button class="btn btn-outline btn-sm" onclick="closeModal('active-players-modal')">
+            <i class="fa-solid fa-arrow-left"></i> BACK TO LOBBY
+          </button>
         </div>
       </div>
     </div>
@@ -330,6 +346,12 @@
             </tbody>
           </table>
         </div>
+
+        <div style="display: flex; justify-content: center; margin-top: 10px;">
+          <button class="btn btn-outline btn-sm" onclick="closeModal('leaderboard-modal')">
+            <i class="fa-solid fa-arrow-left"></i> BACK TO LOBBY
+          </button>
+        </div>
       </div>
     </div>
 
@@ -359,6 +381,12 @@
             <h4>3 ROUND MATCHES</h4>
             <p>Play 3 fast 60-second rounds. First to 2 round wins wins!</p>
           </div>
+        </div>
+
+        <div style="display: flex; justify-content: center; margin-top: 10px;">
+          <button class="btn btn-outline btn-sm" onclick="closeModal('how-to-play-modal')">
+            <i class="fa-solid fa-arrow-left"></i> BACK TO LOBBY
+          </button>
         </div>
       </div>
     </div>

@@ -477,8 +477,10 @@ class GameRoom {
     const red = this.players.red;
     const blue = this.players.blue;
 
-    this.updatePlayerPhysics(red, blue, true);
-    this.updatePlayerPhysics(blue, red, false);
+    this.updatePlayerPhysics(red, true);
+    this.updatePlayerPhysics(blue, false);
+
+    this.evaluateAttacks();
 
     this.checkEdgeFalling(red, blue, 'red');
     this.checkEdgeFalling(blue, red, 'blue');
@@ -515,7 +517,7 @@ class GameRoom {
     });
   }
 
-  updatePlayerPhysics(player, opponent, isRed) {
+  updatePlayerPhysics(player, isRed) {
     if (player.cooldown > 0) player.cooldown--;
     if (player.hitCooldown > 0) {
       player.hitCooldown--;
@@ -541,10 +543,7 @@ class GameRoom {
         player.frameIndex = 1;
         player.attackType = null;
         player.attackTimer = 0;
-      }
-
-      if ((player.frameIndex === 3 || player.frameIndex === 4) && player.attackTimer % 2 === 0) {
-        this.checkHitCollision(player, opponent, isRed);
+        player.hasHitTarget = false;
       }
     } else if (player.state === 'IDLE') {
       player.frameIndex = 1;
@@ -566,8 +565,24 @@ class GameRoom {
     }
   }
 
+  evaluateAttacks() {
+    const red = this.players.red;
+    const blue = this.players.blue;
+
+    const redStrikes = red.state === 'ATTACKING' && (red.frameIndex === 3 || red.frameIndex === 4) && !red.hasHitTarget;
+    const blueStrikes = blue.state === 'ATTACKING' && (blue.frameIndex === 3 || blue.frameIndex === 4) && !blue.hasHitTarget;
+
+    if (redStrikes) {
+      this.checkHitCollision(red, blue, true);
+    }
+    if (blueStrikes) {
+      this.checkHitCollision(blue, red, false);
+    }
+  }
+
   checkHitCollision(attacker, defender, isAttackerRed) {
-    if (defender.state === 'FALLING' || defender.state === 'WATER_SPLASH' || defender.hitCooldown > 0) return;
+    if (defender.state === 'FALLING' || defender.state === 'WATER_SPLASH') return;
+    if (defender.hitCooldown > 0 && !attacker.hasHitTarget) return;
 
     const attackDef = ATTACKS[attacker.attackType] || ATTACKS.quick;
     const attackDir = isAttackerRed ? 1 : -1;
@@ -579,11 +594,18 @@ class GameRoom {
       (isAttackerRed && pillowReachX >= defenderHurtboxMinX && attacker.x < defender.x + 40) ||
       (!isAttackerRed && pillowReachX <= defenderHurtboxMaxX && attacker.x > defender.x - 40)
     ) {
+      attacker.hasHitTarget = true; // Prevents duplicate damage from the same swing
+
       const isCounter = defender.state === 'ATTACKING';
       const isUltimate = attacker.attackType === 'ultimate';
 
-      defender.state = 'KNOCKBACK';
       defender.hitCooldown = isUltimate ? 24 : 16;
+
+      // Even if defender is attacking (simultaneous hit), they take knockback & damage
+      // but their active swing is still evaluated in evaluateAttacks()
+      if (defender.state !== 'ATTACKING') {
+        defender.state = 'KNOCKBACK';
+      }
 
       // Energy Damage & Instability multiplier
       const baseDamage = attackDef.damage + (isCounter ? 6 : 0);
@@ -591,7 +613,6 @@ class GameRoom {
       attacker.damageGivenMatch += baseDamage;
       defender.damageTakenMatch += baseDamage;
 
-      // Instability increases as energy decreases
       const instability = 1.0 + ((100 - defender.energy) / 45.0);
       const knockbackForce = (isAttackerRed ? 1 : -1) * (attackDef.knockback * instability + (isCounter ? 14 : 0));
       defender.vx = knockbackForce;
@@ -625,7 +646,7 @@ class GameRoom {
       // 0 Energy KO Trigger
       if (defender.energy <= 0) {
         defender.state = 'FALLING';
-        defender.vy = -6; // Dramatic launch upwards
+        defender.vy = -6;
         defender.vx = (isAttackerRed ? 1 : -1) * 6;
       }
     }
@@ -653,8 +674,12 @@ class GameRoom {
     this.roundState = 'ROUND_OVER';
     if (this.matchTimerInterval) clearInterval(this.matchTimerInterval);
 
-    const winner = winnerColor === 'red' ? this.players.red : this.players.blue;
-    winner.roundWins += 1;
+    if (winnerColor === 'draw') {
+      // Both took equal KO or time expired equally
+    } else {
+      const winner = winnerColor === 'red' ? this.players.red : this.players.blue;
+      winner.roundWins += 1;
+    }
 
     io.to(this.roomCode).emit('round_over', {
       roundWinner: winnerColor,
@@ -665,10 +690,14 @@ class GameRoom {
 
     if (this.players.red.roundWins >= 2 || this.players.blue.roundWins >= 2 || this.currentRound >= WORLD.TOTAL_ROUNDS) {
       setTimeout(() => {
-        let matchWinnerColor = 'red';
-        if (this.players.blue.roundWins > this.players.red.roundWins) matchWinnerColor = 'blue';
-        else if (this.players.blue.roundWins === this.players.red.roundWins) {
-          matchWinnerColor = this.players.red.damageGivenMatch >= this.players.blue.damageGivenMatch ? 'red' : 'blue';
+        let matchWinnerColor = 'draw';
+        if (this.players.red.roundWins > this.players.blue.roundWins) matchWinnerColor = 'red';
+        else if (this.players.blue.roundWins > this.players.red.roundWins) matchWinnerColor = 'blue';
+        else {
+          // Check damage tiebreaker
+          if (this.players.red.damageGivenMatch > this.players.blue.damageGivenMatch) matchWinnerColor = 'red';
+          else if (this.players.blue.damageGivenMatch > this.players.red.damageGivenMatch) matchWinnerColor = 'blue';
+          else matchWinnerColor = 'draw';
         }
         this.endMatch(matchWinnerColor);
       }, 2500);
@@ -683,8 +712,10 @@ class GameRoom {
   endMatch(winnerColor) {
     this.roundState = 'MATCH_OVER';
 
+    const isDraw = winnerColor === 'draw';
     const redWon = winnerColor === 'red';
-    const winnerName = redWon ? this.players.red.name : this.players.blue.name;
+    const blueWon = winnerColor === 'blue';
+    const winnerName = isDraw ? 'DRAW' : (redWon ? this.players.red.name : this.players.blue.name);
 
     updatePlayerStats(
       this.players.red.name,
@@ -699,7 +730,7 @@ class GameRoom {
     updatePlayerStats(
       this.players.blue.name,
       this.players.blue.deviceId,
-      !redWon,
+      blueWon,
       this.players.blue.roundWins,
       this.players.red.roundWins,
       this.players.blue.damageGivenMatch,
@@ -710,6 +741,7 @@ class GameRoom {
     io.to(this.roomCode).emit('match_over', {
       winnerColor,
       winnerName,
+      isDraw,
       red: {
         name: this.players.red.name,
         roundWins: this.players.red.roundWins,
