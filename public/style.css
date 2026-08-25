@@ -204,17 +204,117 @@ html, body {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 16px;
+  gap: 12px;
   background: radial-gradient(circle at 50% 30%, #0D5C35 0%, #073820 40%, #031D10 75%, #010E07 100%);
   opacity: 0;
   pointer-events: none;
   transition: opacity 0.5s cubic-bezier(0.4, 0, 0.2, 1);
-  overflow: hidden;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: env(safe-area-inset-top, 10px) env(safe-area-inset-right, 15px) env(safe-area-inset-bottom, 10px) env(safe-area-inset-left, 15px);
 }
 
 .onam-cover-screen.active {
   opacity: 1;
   pointer-events: auto;
+}
+
+/* Landscape Mode for Phone Cover Page: Side-by-side or compact layout */
+@media (orientation: landscape) and (max-height: 520px) {
+  .onam-cover-screen {
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    gap: 30px;
+    padding: 10px 40px;
+  }
+
+  .pookalam-art-container {
+    width: 130px !important;
+    height: 130px !important;
+    margin-bottom: 0 !important;
+    flex-shrink: 0;
+  }
+
+  .ring-glow { width: 145px !important; height: 145px !important; }
+  .ring-outer { width: 125px !important; height: 125px !important; }
+  .ring-petals { width: 105px !important; height: 105px !important; }
+  .ring-middle { width: 75px !important; height: 75px !important; }
+  .ring-inner { width: 42px !important; height: 42px !important; }
+  .pookalam-center-blossom { font-size: 1.5rem !important; }
+  .p-petal { font-size: 0.8rem !important; }
+  .pt1 { transform: rotate(0deg) translateY(-42px) !important; }
+  .pt2 { transform: rotate(60deg) translateY(-42px) !important; }
+  .pt3 { transform: rotate(120deg) translateY(-42px) !important; }
+  .pt4 { transform: rotate(180deg) translateY(-42px) !important; }
+  .pt5 { transform: rotate(240deg) translateY(-42px) !important; }
+  .pt6 { transform: rotate(300deg) translateY(-42px) !important; }
+
+  .cover-right-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    z-index: 2;
+  }
+
+  .cover-hero {
+    text-align: center;
+    margin-bottom: 0;
+  }
+
+  .cover-title {
+    font-size: 2.2rem !important;
+    letter-spacing: 2px !important;
+    line-height: 1 !important;
+  }
+
+  .cover-subtitle {
+    font-size: 0.8rem !important;
+    letter-spacing: 1px !important;
+    margin-top: 2px !important;
+  }
+
+  .onam-badge {
+    font-size: 0.68rem !important;
+    letter-spacing: 1px !important;
+    margin-bottom: 2px !important;
+  }
+
+  .cover-actions {
+    margin-top: 2px !important;
+    gap: 8px !important;
+  }
+
+  .btn-cover-play {
+    font-size: 1.05rem !important;
+    padding: 10px 32px !important;
+  }
+
+  .cover-sub-actions {
+    gap: 10px !important;
+  }
+
+  .btn-cover-sub {
+    padding: 6px 14px !important;
+    font-size: 0.75rem !important;
+  }
+
+  .cover-festive-note {
+    font-size: 0.68rem !important;
+    margin-top: 2px !important;
+  }
+
+  .creator-watermark {
+    font-size: 0.62rem !important;
+    margin-top: 2px !important;
+  }
+
+  .css-leaf {
+    width: 120px !important;
+    height: 200px !important;
+    bottom: -50px !important;
+  }
 }
 
 /* Kerala Sun Aura & Divine Festive Beams */
@@ -1712,27 +1812,74 @@ html, body {
    LANDSCAPE PHONE — Mobile gameplay controls won't overlap canvas
    ===================================================================== */
 
-@media (max-height: 500px) and (orientation: landscape) {
+@media (max-height: 540px) and (orientation: landscape) {
   .mobile-controls {
-    bottom: 8px;
-    left: 16px;
-    right: 16px;
+    bottom: max(6px, env(safe-area-inset-bottom, 6px));
+    left: max(12px, env(safe-area-inset-left, 12px));
+    right: max(12px, env(safe-area-inset-right, 12px));
   }
 
-  .touch-btn { width: 48px; height: 48px; font-size: 1.1rem; }
-  .action-btn { width: 46px; height: 46px; }
-  .action-btn i { font-size: 0.9rem; }
-  .action-btn span { display: none; }
-  .joystick-pad { gap: 10px; }
-  .action-buttons-cluster { gap: 8px; }
+  .joystick-pad {
+    gap: 8px;
+  }
 
-  .in-game-top-bar { top: 4px; padding: 4px 10px; border-radius: 12px; }
+  .touch-btn {
+    width: 48px;
+    height: 48px;
+    font-size: 1.1rem;
+    background: rgba(7, 23, 34, 0.88);
+    border: 2px solid var(--primary-color);
+  }
+
+  .action-buttons-cluster {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+  }
+
+  .action-btn {
+    width: 46px;
+    height: 46px;
+    border-radius: 50%;
+  }
+
+  .action-btn i { font-size: 0.95rem; }
+  .action-btn span { display: none; }
+
+  .in-game-top-bar {
+    top: max(4px, env(safe-area-inset-top, 4px));
+    left: max(10px, env(safe-area-inset-left, 10px));
+    right: max(10px, env(safe-area-inset-right, 10px));
+    padding: 3px 12px;
+    border-radius: 12px;
+  }
+
+  .hud-player-box {
+    min-width: 90px;
+    max-width: 140px;
+  }
+
   .hud-player-name { font-size: 0.72rem; }
+  .hud-energy-track { height: 9px; }
+  .hud-hp-text { font-size: 0.5rem; }
   .game-top-title { display: none; }
-  .game-timer-pill { font-size: 0.8rem; padding: 2px 8px; }
-  .in-game-bottom-scorecard { bottom: 8px; }
-  .bottom-score-wrapper { padding: 3px 12px; }
+  .game-top-meta { gap: 6px; }
+  .game-round-pill { font-size: 0.65rem; padding: 1px 6px; }
+  .game-timer-pill { font-size: 0.78rem; padding: 1px 8px; }
+
+  .in-game-bottom-scorecard {
+    bottom: max(4px, env(safe-area-inset-bottom, 4px));
+  }
+
+  .bottom-score-wrapper {
+    padding: 2px 14px;
+    gap: 10px;
+    border-radius: 20px;
+  }
+
+  .score-team-label { font-size: 0.72rem; }
   .score-team-num { font-size: 1.1rem; }
+  .score-divider { font-size: 0.8rem; }
 }
 
 /* =====================================================================

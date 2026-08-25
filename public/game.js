@@ -78,23 +78,31 @@ function triggerHaptic(type = 'light') {
 }
 
 // Orientation & Landscape 16:9 Controller for Mobile Devices
-// Only enforce on actual phones (small width AND touch); tablets/desktops exempt
 function checkOrientation() {
-  const isTouchPhone = ('ontouchstart' in window) && window.screen.width <= 900 && window.screen.height <= 900;
   const isPortrait = window.innerHeight > window.innerWidth;
+  // A mobile phone or small viewport device (width or height <= 920 in portrait or landscape)
+  const isMobileDevice = (
+    ('ontouchstart' in window) || 
+    (navigator.maxTouchPoints && navigator.maxTouchPoints > 0) ||
+    window.matchMedia('(pointer: coarse)').matches
+  ) && (Math.min(window.screen.width, window.screen.height) <= 600 || Math.max(window.innerWidth, window.innerHeight) <= 1024);
+
   const orientEl = document.getElementById('orientation-warning');
   if (orientEl) {
-    orientEl.classList.toggle('hidden', !(isTouchPhone && isPortrait));
+    // Show rotation screen ONLY when a mobile phone is in portrait orientation
+    if (isMobileDevice && isPortrait) {
+      orientEl.classList.remove('hidden');
+    } else {
+      orientEl.classList.add('hidden');
+    }
   }
 }
 
-// NOTE: resize is already attached at line 52 — add orientation check there instead
-// Remove the second duplicate resize listener that was added previously
 window.addEventListener('orientationchange', () => {
   setTimeout(() => {
     resizeCanvas();
     checkOrientation();
-  }, 300);
+  }, 150);
 });
 
 // Reset all keys when window loses focus or tab becomes hidden (prevents stuck buttons)
