@@ -1,8 +1,28 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
+
+    // usernames index — readable for checking availability; only server writes
+    match /usernames/{username} {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    // User profiles — readable by everyone; only server can write
+    match /users/{userId} {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    // Leaderboard — readable by everyone; only server can write
+    match /leaderboards/{docId} {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    // Deny everything else
     match /{document=**} {
-      allow read, write: if request.auth != null;
+      allow read, write: if false;
     }
   }
 }

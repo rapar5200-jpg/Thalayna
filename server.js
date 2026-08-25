@@ -47,6 +47,69 @@ const PORT = process.env.PORT || 3000;
 const LEADERBOARD_FILE = path.join(__dirname, 'leaderboard.json');
 
 app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.json());
+
+// ─── Username Availability Check API ───────────────────────────────────────
+function buildSuggestions(baseName) {
+  const base = baseName.substring(0, 10);
+  const r = () => Math.floor(10 + Math.random() * 90);
+  return [
+    `${base}_${r()}`,
+    `${base}_Play`,
+    `Real${base}`,
+    `${base}Pro`,
+    `${base}_${r()}${r()}`,
+  ].slice(0, 4);
+}
+
+app.get('/api/username-check', async (req, res) => {
+  try {
+    const rawName = (req.query.username || '').trim();
+    const deviceId = (req.query.deviceId || '').trim() || null;
+
+    if (!rawName || rawName.length < 2 || rawName.length > 15) {
+      return res.json({ available: false, reason: 'Username must be 2–15 characters.', suggestions: [] });
+    }
+
+    const cleanName = rawName.replace(/[^a-zA-Z0-9_ ]/g, '').trim();
+    if (!cleanName) {
+      return res.json({ available: false, reason: 'Only letters, numbers, spaces, and underscores allowed.', suggestions: [] });
+    }
+
+    const board = loadLeaderboard();
+
+    // Same device owns this name → available to reuse
+    const existingForDevice = deviceId ? board.find(p => p.deviceId === deviceId) : null;
+    if (existingForDevice && existingForDevice.name.toLowerCase() === cleanName.toLowerCase()) {
+      return res.json({ available: true, confirmedName: existingForDevice.name });
+    }
+
+    // Check if name is taken by someone else
+    const isTakenLocal = board.some(p =>
+      p.name.toLowerCase() === cleanName.toLowerCase() && (!deviceId || p.deviceId !== deviceId)
+    );
+
+    let isTakenFirestore = false;
+    if (!isTakenLocal && firestoreDb) {
+      try {
+        const snap = await firestoreDb.collection('usernames').doc(cleanName.toLowerCase()).get();
+        if (snap.exists) {
+          const data = snap.data();
+          if (!deviceId || data.deviceId !== deviceId) isTakenFirestore = true;
+        }
+      } catch (e) { /* Firestore unavailable — local result wins */ }
+    }
+
+    if (isTakenLocal || isTakenFirestore) {
+      return res.json({ available: false, reason: 'Username is already taken.', suggestions: buildSuggestions(cleanName) });
+    }
+
+    return res.json({ available: true, confirmedName: cleanName });
+  } catch (err) {
+    return res.status(500).json({ available: false, reason: 'Server error. Try again.', suggestions: [] });
+  }
+});
+
 
 // Dynamic Global Leaderboard Store (With Cloud Firestore Sync & Resilient Local Fallback)
 function loadLeaderboard() {
@@ -693,9 +756,28 @@ io.on('connection', (socket) => {
       playerData.name = uniqueName;
       playerData.deviceId = deviceId;
     }
+
+    // Persist username → deviceId mapping to Firestore usernames index
+    if (firestoreDb && deviceId) {
+      try {
+        const batch = firestoreDb.batch();
+        // usernames/{nameLower} → deviceId (fast uniqueness lookup)
+        batch.set(firestoreDb.collection('usernames').doc(uniqueName.toLowerCase()), {
+          username: uniqueName, deviceId, updatedAt: new Date().toISOString()
+        });
+        // users/{deviceId} → profile
+        batch.set(firestoreDb.collection('users').doc(deviceId), {
+          username: uniqueName, displayName: uniqueName, playerId: deviceId,
+          updatedAt: new Date().toISOString()
+        }, { merge: true });
+        await batch.commit();
+      } catch (e) { /* Non-critical, local fallback remains */ }
+    }
+
     socket.emit('username_confirmed', { name: uniqueName, deviceId });
     io.emit('online_players_list', getOnlinePlayersPayload());
   });
+
 
   socket.on('get_online_players', () => {
     socket.emit('online_players_list', getOnlinePlayersPayload());

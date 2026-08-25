@@ -49,7 +49,10 @@ function resizeCanvas() {
   offsetX = (canvas.width - WORLD.WIDTH * scale) / 2;
   offsetY = (canvas.height - WORLD.HEIGHT * scale) / 2;
 }
-window.addEventListener('resize', resizeCanvas);
+window.addEventListener('resize', () => {
+  resizeCanvas();
+  if (typeof checkOrientation === 'function') checkOrientation();
+});
 resizeCanvas();
 
 // Persistent One-Device Identity (UUID generation without relying on shared IPs)
@@ -75,30 +78,31 @@ function triggerHaptic(type = 'light') {
 }
 
 // Orientation & Landscape 16:9 Controller for Mobile Devices
+// Only enforce on actual phones (small width AND touch); tablets/desktops exempt
 function checkOrientation() {
-  const isMobile = window.innerWidth <= 900 || ('ontouchstart' in window);
+  const isTouchPhone = ('ontouchstart' in window) && window.screen.width <= 900 && window.screen.height <= 900;
   const isPortrait = window.innerHeight > window.innerWidth;
   const orientEl = document.getElementById('orientation-warning');
   if (orientEl) {
-    // Show rotation requirement if on mobile and in portrait mode
-    if (isMobile && isPortrait) {
-      orientEl.classList.remove('hidden');
-    } else {
-      orientEl.classList.add('hidden');
-    }
+    orientEl.classList.toggle('hidden', !(isTouchPhone && isPortrait));
   }
 }
 
-window.addEventListener('resize', () => {
-  resizeCanvas();
-  checkOrientation();
-});
+// NOTE: resize is already attached at line 52 — add orientation check there instead
+// Remove the second duplicate resize listener that was added previously
 window.addEventListener('orientationchange', () => {
   setTimeout(() => {
     resizeCanvas();
     checkOrientation();
-  }, 200);
+  }, 300);
 });
+
+// Reset all keys when window loses focus or tab becomes hidden (prevents stuck buttons)
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) clearKeys();
+});
+window.addEventListener('blur', clearKeys);
+
 checkOrientation();
 
 // User Credentials & Room State
@@ -113,6 +117,7 @@ let currentChallengerId = null;
 let serverState = {
   red: { x: 520, y: WORLD.LOG_TOP_Y + WORLD.SEAT_OFFSET, vx: 0, vy: 0, state: 'IDLE', frameIndex: 1, energy: 100, ultMeter: 0, roundWins: 0, points: 0 },
   blue: { x: 1400, y: WORLD.LOG_TOP_Y + WORLD.SEAT_OFFSET, vx: 0, vy: 0, state: 'IDLE', frameIndex: 1, energy: 100, ultMeter: 0, roundWins: 0, points: 0 },
+
   combatIntensity: 0,
   roundState: 'MENU',
   roundTimeRemaining: 60,
@@ -322,7 +327,7 @@ window.addEventListener('keyup', (e) => {
 window.addEventListener('blur', clearKeys);
 window.addEventListener('focus', clearKeys);
 
-// Mobile Touch Controls & 4 Attack Buttons Binding (Universal Pointer + Touch Events)
+// Mobile Touch Controls & 4 Attack Buttons Binding (Unified Pointer Events + Multi-touch + Pointer Capture)
 const btnLeft = document.getElementById('btn-left');
 const btnRight = document.getElementById('btn-right');
 const btnQuick = document.getElementById('btn-attack-quick');
@@ -335,6 +340,11 @@ function bindDirectionButton(btnEl, direction) {
   
   const handleDown = (e) => {
     e.preventDefault();
+    try {
+      if (e.pointerId !== undefined && btnEl.setPointerCapture) {
+        btnEl.setPointerCapture(e.pointerId);
+      }
+    } catch (err) {}
     keys[direction] = true;
     triggerHaptic('light');
     sendInputState();
@@ -342,6 +352,11 @@ function bindDirectionButton(btnEl, direction) {
 
   const handleUp = (e) => {
     e.preventDefault();
+    try {
+      if (e.pointerId !== undefined && btnEl.releasePointerCapture) {
+        btnEl.releasePointerCapture(e.pointerId);
+      }
+    } catch (err) {}
     keys[direction] = false;
     sendInputState();
   };
@@ -349,8 +364,13 @@ function bindDirectionButton(btnEl, direction) {
   btnEl.addEventListener('pointerdown', handleDown);
   btnEl.addEventListener('pointerup', handleUp);
   btnEl.addEventListener('pointercancel', handleUp);
-  btnEl.addEventListener('touchstart', handleDown, { passive: false });
-  btnEl.addEventListener('touchend', handleUp, { passive: false });
+  btnEl.addEventListener('pointerleave', (e) => {
+    // If not captured, release on pointer leave
+    if (keys[direction]) {
+      keys[direction] = false;
+      sendInputState();
+    }
+  });
 }
 
 bindDirectionButton(btnLeft, 'left');
@@ -361,6 +381,11 @@ function bindAttackButton(btnEl, attackType) {
 
   const handleAttackDown = (e) => {
     e.preventDefault();
+    try {
+      if (e.pointerId !== undefined && btnEl.setPointerCapture) {
+        btnEl.setPointerCapture(e.pointerId);
+      }
+    } catch (err) {}
     keys.attackType = attackType;
     triggerHaptic(attackType === 'ultimate' ? 'heavy' : 'medium');
     sendInputState();
@@ -368,6 +393,11 @@ function bindAttackButton(btnEl, attackType) {
 
   const handleAttackUp = (e) => {
     e.preventDefault();
+    try {
+      if (e.pointerId !== undefined && btnEl.releasePointerCapture) {
+        btnEl.releasePointerCapture(e.pointerId);
+      }
+    } catch (err) {}
     keys.attackType = null;
     sendInputState();
   };
@@ -375,16 +405,6 @@ function bindAttackButton(btnEl, attackType) {
   btnEl.addEventListener('pointerdown', handleAttackDown);
   btnEl.addEventListener('pointerup', handleAttackUp);
   btnEl.addEventListener('pointercancel', handleAttackUp);
-  btnEl.addEventListener('touchstart', handleAttackDown, { passive: false });
-  btnEl.addEventListener('touchend', handleAttackUp, { passive: false });
-
-  btnEl.addEventListener('click', (e) => {
-    e.preventDefault();
-    keys.attackType = attackType;
-    triggerHaptic('medium');
-    sendInputState();
-    setTimeout(() => { keys.attackType = null; sendInputState(); }, 120);
-  });
 }
 
 bindAttackButton(btnQuick, 'quick');
@@ -606,20 +626,139 @@ socket.on('opponent_disconnected', () => {
 
 // UI Modal Handlers & Dynamic Leaderboard
 let latestLeaderboardData = [];
+let usernameCheckTimeout = null;
+let isCurrentUsernameValid = false;
 
 function openNameModal() { 
   openModal('username-modal'); 
   const input = document.getElementById('username-input');
-  if (input && localPlayerName) input.value = localPlayerName;
+  if (input) {
+    input.value = localPlayerName || '';
+    if (localPlayerName) {
+      checkUsernameLive(localPlayerName);
+    } else {
+      resetUsernameStatus();
+    }
+  }
+}
+
+function resetUsernameStatus() {
+  const statusEl = document.getElementById('username-status');
+  const suggestionsEl = document.getElementById('username-suggestions');
+  const confirmBtn = document.getElementById('username-confirm-btn');
+  const inputEl = document.getElementById('username-input');
+  const errorEl = document.getElementById('username-error');
+
+  if (statusEl) statusEl.innerHTML = '';
+  if (suggestionsEl) suggestionsEl.classList.add('hidden');
+  if (confirmBtn) confirmBtn.disabled = true;
+  if (inputEl) {
+    inputEl.classList.remove('input-available', 'input-taken');
+  }
+  if (errorEl) errorEl.innerText = '';
+  isCurrentUsernameValid = false;
+}
+
+async function checkUsernameLive(name) {
+  const cleanName = (name || '').trim();
+  const statusEl = document.getElementById('username-status');
+  const suggestionsEl = document.getElementById('username-suggestions');
+  const chipsEl = document.getElementById('suggestion-chips');
+  const confirmBtn = document.getElementById('username-confirm-btn');
+  const inputEl = document.getElementById('username-input');
+  const errorEl = document.getElementById('username-error');
+
+  if (!cleanName || cleanName.length < 2) {
+    resetUsernameStatus();
+    if (cleanName.length === 1 && errorEl) {
+      errorEl.innerText = 'Name must be at least 2 characters.';
+    }
+    return;
+  }
+
+  if (statusEl) {
+    statusEl.innerHTML = `<span class="status-checking"><span class="status-spinner"></span> Checking availability...</span>`;
+  }
+  if (errorEl) errorEl.innerText = '';
+
+  try {
+    const res = await fetch(`/api/username-check?username=${encodeURIComponent(cleanName)}&deviceId=${encodeURIComponent(localDeviceId)}`);
+    const data = await res.json();
+
+    if (data.available) {
+      isCurrentUsernameValid = true;
+      if (statusEl) {
+        statusEl.innerHTML = `<span class="status-available"><i class="fa-solid fa-circle-check"></i> "${data.confirmedName}" is available!</span>`;
+      }
+      if (inputEl) {
+        inputEl.classList.add('input-available');
+        inputEl.classList.remove('input-taken');
+      }
+      if (suggestionsEl) suggestionsEl.classList.add('hidden');
+      if (confirmBtn) confirmBtn.disabled = false;
+      if (errorEl) errorEl.innerText = '';
+    } else {
+      isCurrentUsernameValid = false;
+      if (statusEl) {
+        statusEl.innerHTML = `<span class="status-taken"><i class="fa-solid fa-circle-xmark"></i> ${data.reason || 'Username is already taken.'}</span>`;
+      }
+      if (inputEl) {
+        inputEl.classList.add('input-taken');
+        inputEl.classList.remove('input-available');
+      }
+      if (confirmBtn) confirmBtn.disabled = true;
+
+      // Render suggestions chips
+      if (data.suggestions && data.suggestions.length > 0 && chipsEl && suggestionsEl) {
+        chipsEl.innerHTML = '';
+        data.suggestions.forEach(sug => {
+          const chip = document.createElement('button');
+          chip.type = 'button';
+          chip.className = 'suggestion-chip';
+          chip.innerText = sug;
+          chip.onclick = () => selectSuggestion(sug);
+          chipsEl.appendChild(chip);
+        });
+        suggestionsEl.classList.remove('hidden');
+      }
+    }
+  } catch (err) {
+    // If offline / server check fails, allow local confirm
+    isCurrentUsernameValid = true;
+    if (statusEl) statusEl.innerHTML = `<span class="status-available"><i class="fa-solid fa-circle-check"></i> Ready</span>`;
+    if (confirmBtn) confirmBtn.disabled = false;
+  }
+}
+
+function selectSuggestion(suggestion) {
+  const inputEl = document.getElementById('username-input');
+  if (inputEl) {
+    inputEl.value = suggestion;
+    checkUsernameLive(suggestion);
+  }
+}
+
+// Bind live debounced typing on username input
+const usernameInputEl = document.getElementById('username-input');
+if (usernameInputEl) {
+  usernameInputEl.addEventListener('input', (e) => {
+    clearTimeout(usernameCheckTimeout);
+    const val = e.target.value;
+    usernameCheckTimeout = setTimeout(() => {
+      checkUsernameLive(val);
+    }, 280);
+  });
 }
 
 function confirmUsername() {
-  const input = document.getElementById('username-input').value.trim();
-  if (input.length < 2) {
-    document.getElementById('username-error').innerText = 'Name must be at least 2 characters.';
+  const input = document.getElementById('username-input')?.value.trim();
+  if (!input || input.length < 2) {
+    const err = document.getElementById('username-error');
+    if (err) err.innerText = 'Name must be at least 2 characters.';
     return;
   }
-  document.getElementById('username-error').innerText = '';
+  const errorEl = document.getElementById('username-error');
+  if (errorEl) errorEl.innerText = '';
   socket.emit('set_username', { name: input, deviceId: localDeviceId });
 }
 
@@ -713,27 +852,39 @@ function openLeaderboardModal() {
 // Render Live Dynamic Leaderboard (No Static Dummy Names)
 function renderLeaderboard(board) {
   const tbody = document.getElementById('leaderboard-tbody');
+  if (!tbody) return;
   tbody.innerHTML = '';
 
   if (!board || board.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="10" style="text-align:center; color:#A0C4E2;">No completed matches yet. Be the first champion on the leaderboard!</td></tr>`;
+    tbody.innerHTML = `
+      <tr>
+        <td colspan="10">
+          <div class="lb-empty-state">
+            <i class="fa-solid fa-trophy"></i>
+            <p><strong>No champions yet!</strong><br>Play a match and be the first on the global leaderboard!</p>
+          </div>
+        </td>
+      </tr>`;
     return;
   }
 
   board.forEach((p, idx) => {
     const tr = document.createElement('tr');
+    const isCurrentPlayer = (p.name.toLowerCase() === localPlayerName.toLowerCase()) || (p.deviceId && p.deviceId === localDeviceId);
+    if (isCurrentPlayer) tr.className = 'highlight-user-row';
+    const medal = idx === 0 ? '🥇 ' : idx === 1 ? '🥈 ' : idx === 2 ? '🥉 ' : '';
     const rankClass = idx === 0 ? 'rank-1' : idx === 1 ? 'rank-2' : idx === 2 ? 'rank-3' : '';
     tr.innerHTML = `
-      <td class="${rankClass}">#${idx + 1}</td>
-      <td><strong>${p.name}</strong></td>
-      <td>${p.totalMatches}</td>
-      <td>${p.matchesWon}</td>
-      <td>${p.matchesLost}</td>
-      <td>${p.roundsWon}</td>
-      <td>${p.energyDamageGiven}</td>
-      <td>${p.winPercentage}%</td>
-      <td>${p.score}</td>
-      <td>🔥 ${p.winStreak}</td>
+      <td class="${rankClass}"><strong>${medal}#${idx + 1}</strong></td>
+      <td><strong>${p.name}</strong> ${isCurrentPlayer ? '<span style="color:var(--primary-color); font-size:0.75rem;">(YOU)</span>' : ''}</td>
+      <td>${p.totalMatches || 0}</td>
+      <td>${p.matchesWon || 0}</td>
+      <td>${p.matchesLost || 0}</td>
+      <td>${p.roundsWon || 0}</td>
+      <td>${p.energyDamageGiven || 0}</td>
+      <td>${p.winPercentage || 0}%</td>
+      <td><strong>${p.score || 0}</strong></td>
+      <td>🔥 ${p.winStreak || 0}</td>
     `;
     tbody.appendChild(tr);
   });

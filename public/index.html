@@ -173,16 +173,49 @@
       </div>
     </div>
 
-    <!-- USERNAME ENTRY MODAL -->
+    <!-- USERNAME ENTRY MODAL — Real-time availability check -->
     <div class="modal" id="username-modal">
-      <div class="modal-content glass-panel glow-border">
-        <h2><i class="fa-solid fa-id-card"></i> ENTER YOUR CHAMPION NAME</h2>
-        <p>Choose your display name for live competitive leaderboard ranking.</p>
-        <div class="input-group">
-          <input type="text" id="username-input" placeholder="e.g. Arun, Maya, Rahul" maxlength="15">
-          <button class="btn btn-primary" onclick="confirmUsername()">CONFIRM</button>
+      <div class="modal-content glass-panel glow-border username-modal-panel">
+        <div class="username-modal-header">
+          <div class="username-modal-icon">🥊</div>
+          <h2>CHOOSE YOUR CHAMPION NAME</h2>
+          <p>Your unique identity in the Kerala Battle Arena</p>
         </div>
+
+        <div class="username-input-wrapper">
+          <input
+            type="text"
+            id="username-input"
+            placeholder="e.g. Arun, Maya, Rahul"
+            maxlength="15"
+            autocomplete="off"
+            autocorrect="off"
+            autocapitalize="words"
+            spellcheck="false"
+            inputmode="text"
+          >
+          <div class="username-check-status" id="username-status">
+            <!-- Status indicator renders here -->
+          </div>
+        </div>
+
+        <div class="username-suggestions hidden" id="username-suggestions">
+          <p class="suggestions-label">Try one of these:</p>
+          <div class="suggestion-chips" id="suggestion-chips">
+            <!-- Chips rendered here -->
+          </div>
+        </div>
+
         <div class="error-text" id="username-error"></div>
+
+        <button class="btn btn-primary btn-block btn-confirm-username" id="username-confirm-btn" onclick="confirmUsername()" disabled>
+          <i class="fa-solid fa-check"></i> CONFIRM NAME
+        </button>
+
+        <p class="username-modal-note">
+          <i class="fa-solid fa-shield-halved"></i>
+          Your name is saved to this device. It can't be taken by others.
+        </p>
       </div>
     </div>
 

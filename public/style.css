@@ -1437,7 +1437,6 @@ html, body {
   100% { transform: scale(1.1); box-shadow: 0 0 30px #FF0054; }
 }
 
-/* Responsive Scaling Rules */
 @media (max-width: 768px) {
   .hero-title { font-size: 2.2rem; }
   .menu-card { width: 90%; }
@@ -1469,3 +1468,524 @@ html, body {
   .action-btn { width: 48px; height: 48px; }
   .touch-btn { width: 46px; height: 46px; }
 }
+
+/* =====================================================================
+   NEW STYLES — USERNAME AVAILABILITY MODAL
+   ===================================================================== */
+
+.username-modal-panel {
+  max-width: 420px;
+  gap: 16px;
+}
+
+.username-modal-header {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.username-modal-icon {
+  font-size: 2.8rem;
+  line-height: 1;
+}
+
+.username-modal-header h2 {
+  font-size: 1.2rem;
+  font-weight: 900;
+  letter-spacing: 1px;
+  background: linear-gradient(135deg, #FFB703, #FB8500);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.username-modal-header p {
+  font-size: 0.85rem;
+  color: #A0C4E2;
+}
+
+.username-input-wrapper {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.username-input-wrapper input {
+  width: 100%;
+  background: rgba(255, 255, 255, 0.1);
+  border: 2px solid rgba(255, 183, 3, 0.4);
+  border-radius: 14px;
+  padding: 14px 18px;
+  color: #FFFFFF;
+  font-family: var(--font-family);
+  font-size: 16px;
+  outline: none;
+  user-select: text;
+  -webkit-user-select: text;
+  transition: border-color 0.2s ease, background 0.2s ease;
+  letter-spacing: 0.5px;
+}
+
+.username-input-wrapper input:focus {
+  border-color: var(--primary-color);
+  background: rgba(255, 255, 255, 0.15);
+  box-shadow: 0 0 20px rgba(255, 183, 3, 0.3);
+}
+
+.username-input-wrapper input.input-available {
+  border-color: #2A9D8F !important;
+}
+
+.username-input-wrapper input.input-taken {
+  border-color: #E63946 !important;
+}
+
+.username-check-status {
+  min-height: 24px;
+  font-size: 0.88rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.status-checking {
+  color: #A0C4E2;
+}
+
+.status-available {
+  color: #2A9D8F;
+}
+
+.status-taken {
+  color: #E63946;
+}
+
+.status-spinner {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(160, 196, 226, 0.4);
+  border-top-color: #A0C4E2;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.username-suggestions {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.suggestions-label {
+  font-size: 0.78rem;
+  color: #A0C4E2;
+  font-weight: 600;
+}
+
+.suggestion-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.suggestion-chip {
+  background: rgba(255, 183, 3, 0.15);
+  border: 1px solid rgba(255, 183, 3, 0.4);
+  color: #FFB703;
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: var(--font-family);
+  transition: background 0.15s ease, transform 0.1s ease;
+  user-select: none;
+  min-height: 36px;
+  display: flex;
+  align-items: center;
+}
+
+.suggestion-chip:hover,
+.suggestion-chip:active {
+  background: rgba(255, 183, 3, 0.3);
+  transform: scale(1.04);
+}
+
+.btn-confirm-username {
+  min-height: 52px;
+  font-size: 1rem;
+  letter-spacing: 1.5px;
+  transition: all 0.2s ease;
+}
+
+.btn-confirm-username:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  transform: none !important;
+}
+
+.username-modal-note {
+  font-size: 0.76rem;
+  color: rgba(160, 196, 226, 0.7);
+  text-align: center;
+  user-select: text;
+  -webkit-user-select: text;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+/* =====================================================================
+   MOBILE COVER PAGE FIXES — Prevent overflow on small phones
+   ===================================================================== */
+
+@media (max-width: 480px) {
+  .onam-cover-screen {
+    gap: 10px;
+    padding: 16px;
+    padding-top: max(16px, env(safe-area-inset-top));
+    padding-bottom: max(80px, env(safe-area-inset-bottom));
+  }
+
+  .pookalam-art-container {
+    width: 130px;
+    height: 130px;
+  }
+
+  .ring-glow { width: 145px; height: 145px; }
+  .ring-outer { width: 128px; height: 128px; }
+  .ring-petals { width: 108px; height: 108px; }
+  .ring-middle { width: 78px; height: 78px; }
+  .ring-inner { width: 44px; height: 44px; }
+  .pookalam-center-blossom { font-size: 1.6rem; }
+  .pt1 { transform: rotate(0deg) translateY(-44px); }
+  .pt2 { transform: rotate(60deg) translateY(-44px); }
+  .pt3 { transform: rotate(120deg) translateY(-44px); }
+  .pt4 { transform: rotate(180deg) translateY(-44px); }
+  .pt5 { transform: rotate(240deg) translateY(-44px); }
+  .pt6 { transform: rotate(300deg) translateY(-44px); }
+  .p-petal { font-size: 0.85rem; }
+
+  .cover-title { font-size: 2.6rem; letter-spacing: 2px; }
+  .cover-subtitle { font-size: 0.85rem; letter-spacing: 1px; }
+  .onam-badge { font-size: 0.72rem; letter-spacing: 1px; }
+
+  .btn-cover-play { font-size: 1.1rem; padding: 14px 32px; }
+  .cover-sub-actions { flex-direction: column; gap: 8px; width: 100%; }
+  .btn-cover-sub { width: 100%; justify-content: center; min-height: 44px; }
+
+  .cover-festive-note { display: none; }
+  .creator-watermark { font-size: 0.65rem; }
+
+  .css-leaf { width: 140px; height: 240px; }
+  .leaf-left { left: -30px; }
+  .leaf-right { right: -30px; }
+}
+
+@media (max-width: 390px) {
+  .cover-title { font-size: 2rem; }
+  .btn-cover-play { font-size: 1rem; padding: 12px 24px; }
+  .pookalam-art-container { width: 110px; height: 110px; }
+  .ring-glow { width: 120px; height: 120px; }
+  .ring-outer { width: 105px; height: 105px; }
+  .ring-petals { width: 88px; height: 88px; }
+  .ring-middle { width: 65px; height: 65px; }
+  .ring-inner { width: 36px; height: 36px; }
+  .pt1 { transform: rotate(0deg) translateY(-36px); }
+  .pt2 { transform: rotate(60deg) translateY(-36px); }
+  .pt3 { transform: rotate(120deg) translateY(-36px); }
+  .pt4 { transform: rotate(180deg) translateY(-36px); }
+  .pt5 { transform: rotate(240deg) translateY(-36px); }
+  .pt6 { transform: rotate(300deg) translateY(-36px); }
+}
+
+/* =====================================================================
+   LANDSCAPE PHONE — Mobile gameplay controls won't overlap canvas
+   ===================================================================== */
+
+@media (max-height: 500px) and (orientation: landscape) {
+  .mobile-controls {
+    bottom: 8px;
+    left: 16px;
+    right: 16px;
+  }
+
+  .touch-btn { width: 48px; height: 48px; font-size: 1.1rem; }
+  .action-btn { width: 46px; height: 46px; }
+  .action-btn i { font-size: 0.9rem; }
+  .action-btn span { display: none; }
+  .joystick-pad { gap: 10px; }
+  .action-buttons-cluster { gap: 8px; }
+
+  .in-game-top-bar { top: 4px; padding: 4px 10px; border-radius: 12px; }
+  .hud-player-name { font-size: 0.72rem; }
+  .game-top-title { display: none; }
+  .game-timer-pill { font-size: 0.8rem; padding: 2px 8px; }
+  .in-game-bottom-scorecard { bottom: 8px; }
+  .bottom-score-wrapper { padding: 3px 12px; }
+  .score-team-num { font-size: 1.1rem; }
+}
+
+/* =====================================================================
+   TABLET BREAKPOINT — iPad / Android Tablet
+   ===================================================================== */
+
+@media (min-width: 768px) and (max-width: 1024px) {
+  .menu-card { width: 480px; }
+  .modal-content { max-width: 560px; }
+  .action-btn { width: 68px; height: 68px; }
+  .touch-btn { width: 62px; height: 62px; }
+  .cover-title { font-size: 3.8rem; }
+}
+
+/* =====================================================================
+   MINIMUM TAP TARGETS — All interactive elements >= 44x44px
+   ===================================================================== */
+
+.btn, .close-btn, .touch-btn, .action-btn, .suggestion-chip,
+.user-profile-badge, .music-wave-bar, .btn-cover-play, .btn-cover-sub {
+  min-height: 44px;
+}
+
+.close-btn {
+  min-width: 44px;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Touch-active press state for all interactive elements */
+.btn:active, .touch-btn:active, .action-btn:active, .btn-cover-play:active, .btn-cover-sub:active {
+  transform: scale(0.95) !important;
+  opacity: 0.85;
+}
+
+/* =====================================================================
+   LEADERBOARD TABLE — Responsive for mobile
+   ===================================================================== */
+
+.table-responsive {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  width: 100%;
+}
+
+@media (max-width: 600px) {
+  .leaderboard-table th, .leaderboard-table td {
+    padding: 8px 8px;
+    font-size: 0.78rem;
+  }
+
+  /* Hide less important columns on small screens */
+  .leaderboard-table th:nth-child(3),
+  .leaderboard-table td:nth-child(3),
+  .leaderboard-table th:nth-child(5),
+  .leaderboard-table td:nth-child(5),
+  .leaderboard-table th:nth-child(7),
+  .leaderboard-table td:nth-child(7) {
+    display: none;
+  }
+
+  .modal-content.wide-modal {
+    max-width: 100% !important;
+    padding: 20px 16px !important;
+    border-radius: 16px;
+    width: 96%;
+  }
+
+  .result-actions-row {
+    flex-direction: column;
+  }
+
+  .result-actions-row .btn {
+    flex: unset;
+    width: 100%;
+  }
+
+  .result-modal-panel {
+    padding: 16px !important;
+    max-height: 95vh;
+  }
+
+  .winner-announce-title { font-size: 1.6rem; }
+  .ugp-stats { flex-direction: column; gap: 4px; font-size: 0.75rem; }
+}
+
+/* =====================================================================
+   MODAL SAFE AREA FIX — iPhone notch / Dynamic Island
+   ===================================================================== */
+
+.modal-content {
+  margin-top: max(0px, env(safe-area-inset-top));
+  margin-bottom: max(0px, env(safe-area-inset-bottom));
+}
+
+/* =====================================================================
+   TOP NAV — Mobile shrink on small screens
+   ===================================================================== */
+
+@media (max-width: 480px) {
+  .top-nav {
+    top: 8px;
+    left: 8px;
+    right: 8px;
+    height: 50px;
+    padding: 0 14px;
+  }
+
+  .brand-title { font-size: 1rem; letter-spacing: 0.5px; }
+  .online-tag { display: none; }
+  .pookalam-icon { font-size: 1.2rem; }
+  .user-profile-badge { padding: 6px 12px; gap: 6px; }
+  .user-profile-badge span { font-size: 0.82rem; }
+}
+
+/* =====================================================================
+   MENU SCREEN — Fit full width with scrollable content on small phones
+   ===================================================================== */
+
+@media (max-width: 480px) {
+  .overlay-screen {
+    width: 100%;
+    padding: 0 12px;
+    padding-top: 64px;
+    justify-content: flex-start;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .menu-card {
+    width: 100%;
+    padding: 20px 16px;
+    gap: 12px;
+    border-radius: 16px;
+  }
+
+  .hero-banner { margin-bottom: 4px; }
+  .hero-title { font-size: 1.9rem; }
+  .hero-subtitle { font-size: 0.85rem; }
+  .onam-decoration { font-size: 0.95rem; letter-spacing: 3px; }
+
+  .btn { font-size: 0.9rem; padding: 12px 16px; }
+  .btn-lg { font-size: 1rem; padding: 14px 20px; }
+  .button-row { flex-direction: row; gap: 8px; }
+  .button-row .btn { font-size: 0.78rem; }
+}
+
+/* =====================================================================
+   LOADING / EMPTY / ERROR STATE STYLES FOR LEADERBOARD
+   ===================================================================== */
+
+.lb-loading-state, .lb-empty-state, .lb-error-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 32px 16px;
+  gap: 12px;
+  text-align: center;
+}
+
+.lb-loading-state i, .lb-empty-state i, .lb-error-state i {
+  font-size: 2rem;
+}
+
+.lb-loading-state { color: #A0C4E2; }
+.lb-empty-state { color: #A0C4E2; }
+.lb-error-state { color: #E63946; }
+
+.lb-loading-state p, .lb-empty-state p, .lb-error-state p {
+  font-size: 0.9rem;
+  line-height: 1.4;
+}
+
+/* Rank badge decoration for top 3 */
+.rank-badge-1::before { content: '🥇 '; }
+.rank-badge-2::before { content: '🥈 '; }
+.rank-badge-3::before { content: '🥉 '; }
+
+/* =====================================================================
+   PLAYER STATUS BADGE in Active Players Modal
+   ===================================================================== */
+
+.player-status {
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  padding: 2px 8px;
+  border-radius: 8px;
+  display: inline-block;
+  margin-top: 2px;
+}
+
+.status-idle { background: rgba(42, 157, 143, 0.2); color: #2A9D8F; }
+.status-in_game { background: rgba(230, 57, 70, 0.2); color: #E63946; }
+.status-matchmaking { background: rgba(255, 183, 3, 0.2); color: #FFB703; }
+
+/* =====================================================================
+   ROOM SECTION — Mobile layout
+   ===================================================================== */
+
+.room-section h3 {
+  font-size: 0.85rem;
+  font-weight: 900;
+  letter-spacing: 1px;
+  color: var(--primary-color);
+  margin-bottom: 10px;
+}
+
+.waiting-pulse {
+  font-size: 0.82rem;
+  color: #A0C4E2;
+  animation: waitPulse 1.5s ease-in-out infinite alternate;
+}
+
+@keyframes waitPulse {
+  from { opacity: 0.5; }
+  to { opacity: 1; }
+}
+
+.empty-text {
+  font-size: 0.88rem;
+  color: #A0C4E2;
+  text-align: center;
+  padding: 16px;
+  line-height: 1.5;
+}
+
+/* =====================================================================
+   MOBILE CONTROLS — Prevent z-index conflicts with game canvas
+   ===================================================================== */
+
+.mobile-controls {
+  z-index: 11;
+  /* Ensure controls appear above canvas and HUD when in game */
+  pointer-events: none;
+}
+
+.joystick-pad, .action-buttons-cluster {
+  pointer-events: auto;
+}
+
+/* Touch button active state with scale feedback */
+.touch-btn:active, .action-btn:active {
+  transform: scale(0.88) !important;
+  opacity: 0.75;
+}
+
+/* Prevent text selection during frantic tapping */
+.mobile-controls * {
+  user-select: none;
+  -webkit-user-select: none;
+}
+
