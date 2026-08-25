@@ -397,6 +397,13 @@ function bindAttackButton(btnEl, attackType) {
     keys.attackType = attackType;
     triggerHaptic(attackType === 'ultimate' ? 'heavy' : 'medium');
     sendInputState();
+    // Auto reset the attack key pulse after dispatch so next attack is instantly ready
+    setTimeout(() => {
+      if (keys.attackType === attackType) {
+        keys.attackType = null;
+        sendInputState();
+      }
+    }, 100);
   };
 
   const handleAttackUp = (e) => {
@@ -1117,12 +1124,62 @@ function toggleAudioMute() {
   updateMusicWaveBar();
 }
 
+function toggleFullScreen() {
+  const elem = document.documentElement;
+  const icon = document.getElementById('fullscreen-icon');
+  
+  if (!document.fullscreenElement && !document.webkitFullscreenElement && !document.mozFullScreenElement && !document.msFullscreenElement) {
+    if (elem.requestFullscreen) {
+      elem.requestFullscreen().catch(() => {});
+    } else if (elem.webkitRequestFullscreen) {
+      elem.webkitRequestFullscreen();
+    } else if (elem.mozRequestFullScreen) {
+      elem.mozRequestFullScreen();
+    } else if (elem.msRequestFullscreen) {
+      elem.msRequestFullscreen();
+    }
+    if (icon) {
+      icon.className = 'fa-solid fa-compress';
+    }
+  } else {
+    if (document.exitFullscreen) {
+      document.exitFullscreen().catch(() => {});
+    } else if (document.webkitExitFullscreen) {
+      document.webkitExitFullscreen();
+    } else if (document.mozCancelFullScreen) {
+      document.mozCancelFullScreen();
+    } else if (document.msExitFullscreen) {
+      document.msExitFullscreen();
+    }
+    if (icon) {
+      icon.className = 'fa-solid fa-expand';
+    }
+  }
+}
+
+document.addEventListener('fullscreenchange', () => {
+  const icon = document.getElementById('fullscreen-icon');
+  if (icon) {
+    icon.className = document.fullscreenElement ? 'fa-solid fa-compress' : 'fa-solid fa-expand';
+  }
+  setTimeout(() => {
+    resizeCanvas();
+    if (typeof checkOrientation === 'function') checkOrientation();
+  }, 100);
+});
+
 // ==========================================================================
 // SCREEN TRANSITIONS: COVER -> LOBBY -> MATCH -> RESULT
 // ==========================================================================
 function enterGameLobby() {
   initAudio();
   playCoverMusic(0.35);
+
+  // Attempt seamless fullscreen on user gesture for mobile devices where supported
+  if (window.innerWidth <= 920 && !document.fullscreenElement && document.documentElement.requestFullscreen) {
+    document.documentElement.requestFullscreen().catch(() => {});
+  }
+
   const cover = document.getElementById('onam-cover-screen');
   const menu = document.getElementById('menu-screen');
   if (cover) cover.classList.remove('active');

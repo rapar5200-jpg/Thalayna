@@ -448,7 +448,7 @@ class GameRoom {
   handleInput(socketId, input) {
     if (this.roundState !== 'PLAYING') return;
     const player = socketId === this.players.red.socketId ? this.players.red : this.players.blue;
-    player.input = input;
+    player.input.move = input.move || 0;
 
     // Trigger attack if valid attackType requested and player is ready
     if (input.attackType && player.state === 'IDLE' && player.attackTimer === 0 && player.cooldown === 0 && player.hitCooldown === 0) {
@@ -462,6 +462,7 @@ class GameRoom {
         player.attackType = input.attackType;
         player.attackTimer = attackDef.attackTicks;
         player.cooldown = attackDef.cooldownTicks;
+        player.input.attackType = null; // Auto-consume attack input so it won't loop
       }
     }
   }
@@ -539,6 +540,7 @@ class GameRoom {
         player.state = 'IDLE';
         player.frameIndex = 1;
         player.attackType = null;
+        player.attackTimer = 0;
       }
 
       if ((player.frameIndex === 3 || player.frameIndex === 4) && player.attackTimer % 2 === 0) {
