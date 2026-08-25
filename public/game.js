@@ -217,6 +217,18 @@ function clearKeys() {
 }
 
 window.addEventListener('keydown', (e) => {
+  // If user is currently typing in an input box or textarea, do not capture game hotkeys
+  if (e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA')) {
+    if (e.key === 'Enter') {
+      if (e.target.id === 'username-input') {
+        confirmUsername();
+      } else if (e.target.id === 'join-code-input') {
+        joinPrivateRoom();
+      }
+    }
+    return;
+  }
+
   let isGameKey = false;
 
   if (e.key === 'a' || e.key === 'A' || e.key === 'ArrowLeft') { keys.left = true; isGameKey = true; }
@@ -235,29 +247,31 @@ window.addEventListener('keydown', (e) => {
 
   if (isGameKey) {
     e.preventDefault();
-    e.stopPropagation();
-    if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
   }
 
   sendInputState();
 });
 
 window.addEventListener('keyup', (e) => {
+  if (e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA')) {
+    return;
+  }
+
   let isGameKey = false;
 
   if (e.key === 'a' || e.key === 'A' || e.key === 'ArrowLeft') { keys.left = false; isGameKey = true; }
   if (e.key === 'd' || e.key === 'D' || e.key === 'ArrowRight') { keys.right = false; isGameKey = true; }
   if (['1', '2', '3', '4', ' ', 'k', 'K'].includes(e.key)) { keys.attackType = null; isGameKey = true; }
 
-  if (isGameKey) e.preventDefault();
+  if (isGameKey) {
+    e.preventDefault();
+  }
+
   sendInputState();
 });
 
 window.addEventListener('blur', clearKeys);
 window.addEventListener('focus', clearKeys);
-document.addEventListener('click', () => {
-  if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
-});
 
 // Mobile Touch Controls & 4 Attack Buttons Binding
 const btnLeft = document.getElementById('btn-left');

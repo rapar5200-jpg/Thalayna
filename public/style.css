@@ -913,18 +913,24 @@ html, body {
 .input-group { display: flex; gap: 10px; width: 100%; }
 .input-group input {
   flex: 1;
-  background: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 10px;
-  padding: 12px 16px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 183, 3, 0.4);
+  border-radius: 12px;
+  padding: 14px 18px;
   color: #FFFFFF;
   font-family: var(--font-family);
-  font-size: 1rem;
+  font-size: 16px; /* 16px prevents iOS Safari automatic page zoom */
   outline: none;
-  transition: border-color 0.2s ease;
+  user-select: text;
+  -webkit-user-select: text;
+  transition: all 0.2s ease;
 }
-.input-group input:focus { border-color: var(--primary-color); }
-.error-text { color: #E63946; font-size: 0.85rem; margin-top: -10px; }
+.input-group input:focus {
+  border-color: var(--primary-color);
+  background: rgba(255, 255, 255, 0.15);
+  box-shadow: 0 0 15px rgba(255, 183, 3, 0.35);
+}
+.error-text { color: #E63946; font-size: 0.85rem; margin-top: -8px; font-weight: 600; }
 
 /* Room Code & Radar */
 .room-code-box {
